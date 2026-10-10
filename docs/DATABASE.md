@@ -50,3 +50,37 @@ Executes a consistent `pg_dump` compressed with gzip (`.sql.gz`), timestamped an
 ./scripts/restore-db.sh ./backups/database/smart_scheme_backup_YYYYMMDD_HHMMSS.sql.gz --confirm
 ```
 Decompresses the snapshot, applies relational data, and automatically triggers `validate:integrity`.
+
+---
+
+## Official Indian Government Schemes Dataset
+
+The repository includes a comprehensive, verified seed catalog of **162 authentic Indian Government schemes** spanning all 15 Central Ministries and state welfare directorates:
+
+### Seeding Commands
+```bash
+# Seed all 162 verified schemes across parts 1, 2, 3, and 4
+npm --prefix backend run prisma:seed:all
+
+# Production minimal baseline seed
+npm --prefix backend run prisma:seed:prod
+```
+
+### Verified Category Coverage (Minimum 20 Official Schemes Per Category)
+| Category Filter | Scheme Count | Sample Flagship Schemes Included |
+| :--- | :---: | :--- |
+| **Education** | **33** | Post-Matric SC/ST/OBC, PM-USP, AICTE Pragati, National Overseas Scholarship |
+| **Social Security** | **45** | Atal Pension (APY), IGNOAPS, PM-SYM, Antyodaya Anna Yojana, NSAP |
+| **Financial Assistance** | **40** | PM-KISAN, MUDRA Shishu/Kishore/Tarun, Stand-Up India, PM SVANidhi |
+| **Health** | **26** | Ayushman Bharat (AB-PMJAY), Ayushman Vay Vandana 70+, Janani Suraksha, RAN |
+| **Entrepreneurship** | **28** | PMEGP, Startup India Seed Fund (SISFS), CGTMSE, NBCFDC, Stand-Up India |
+| **Women Empowerment** | **24** | Sukanya Samriddhi (SSY), Beti Bachao Beti Padhao, Mahila Samman, Mission Shakti |
+| **Student Support** | **22** | NMMSS, PMRF, Ishan Uday, Pre/Post-Matric PwD Scholarships, CBSE Udaan |
+| **Employment** | **21** | MGNREGA, PM Vishwakarma, National Apprenticeship (NAPS-2), ASEEM |
+| **Agriculture & Farming** | **20** | PM-KISAN, PM Fasal Bima (PMFBY), Kisan Credit Card (KCC), PM-KUSUM |
+| **Housing & Shelter** | **20** | PMAY-G, PMAY-U 2.0, PM Surya Ghar Solar, SBM-G IHHL, ARHCs, DDA, MHADA |
+| **Persons with Disabilities** | **20** | ADIP Assistive Devices, Divyangjan Swavalamban, UDID Card, Niramaya Insurance |
+| **Senior Citizens** | **20** | Ayushman 70+, PM Vaya Vandana, Senior Citizens Savings (SCSS), RVY, AVYAY |
+| **Skill Development** | **20** | PMKVY 4.0, PM-DAKSH, DDU-GKY, CITS, STRIVE, SANKALP, Craftsmen Training |
+| **Child Welfare** | **20** | PM CARES for Children, Poshan 2.0, Mission Vatsalya, KGBV, RBSK, Palna |
+

@@ -19,6 +19,7 @@
     "prisma:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
     "prisma:seed:prod": "tsx prisma/seed.prod.ts",
+    "prisma:seed:all": "tsx prisma/seed.all-schemes.ts",
     "validate:integrity": "tsx src/scripts/validate-data-integrity.ts"
   },
   "dependencies": {
