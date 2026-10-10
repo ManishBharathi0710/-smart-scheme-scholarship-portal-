@@ -1,0 +1,1 @@
+/Users/manishbharathi/Desktop/Saturday project/backend/node_modules/@embedded-postgres/darwin-arm64/native/bin/postgres "-D" "/Users/manishbharathi/Desktop/Saturday project/backend/.pgdata" "-p" "5432"

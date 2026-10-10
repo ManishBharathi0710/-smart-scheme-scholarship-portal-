@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --primary-gov: #0f2942;
+    --primary-gov-accent: #1e4566;
+  }
+
+  body {
+    @apply bg-slate-50 text-slate-800 selection:bg-gov-200 selection:text-gov-900;
+  }
+
+  /* Accessibility skip link */
+  .skip-to-content {
+    @apply sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:px-4 focus:py-2 focus:bg-gov-900 focus:text-white focus:rounded-md focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-amber-400;
+  }
+}

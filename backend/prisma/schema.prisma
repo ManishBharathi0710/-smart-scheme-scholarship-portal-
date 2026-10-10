@@ -1,0 +1,1107 @@
+// Prisma Schema for Smart Scheme & Scholarship Recommendation Portal
+// Module 1 & 2: System Health, Authentication, Authorization & User Profiles
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Foundational model to verify database connectivity, migrations, and audit heartbeats
+model SystemHealthCheck {
+  id        String   @id @default(uuid()) @db.Uuid
+  status    String   @db.VarChar(50)
+  timestamp DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  metadata  Json?    @map("metadata")
+
+  @@map("system_health_checks")
+}
+
+// ==============================================================================
+// AUTHENTICATION & USER MANAGEMENT
+// ==============================================================================
+
+enum UserRole {
+  USER
+  ADMIN
+  SCHEME_MANAGER
+  VERIFIER
+  SUPER_ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DISABLED
+  PENDING_VERIFICATION
+}
+
+model User {
+  id                String       @id @default(uuid()) @db.Uuid
+  email             String       @unique @db.VarChar(255)
+  passwordHash      String       @map("password_hash") @db.VarChar(255)
+  role              UserRole     @default(USER)
+  status            UserStatus   @default(ACTIVE)
+  emailVerifiedAt   DateTime?    @map("email_verified_at") @db.Timestamptz(6)
+  lastLoginAt       DateTime?    @map("last_login_at") @db.Timestamptz(6)
+  createdAt         DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // Relationships
+  profile             UserProfile?
+  refreshTokens       RefreshToken[]
+  passwordResetTokens PasswordResetToken[]
+  preferences         UserPreference[]
+  consents            Consent[]
+  recommendations     Recommendation[]
+  savedSchemes        SavedScheme[]
+  recentlyViewed      RecentlyViewedScheme[]
+  documents           UserDocument[]
+  documentAuditLogs   DocumentAuditLog[]
+  notifications       Notification[]
+  notificationPreference NotificationPreference?
+  conversations       Conversation[]
+  aiUsages            AiUsage[]
+  auditLogs           AuditLog[]
+
+  @@index([role])
+  @@index([status])
+  @@index([createdAt])
+  @@map("users")
+}
+
+model RefreshToken {
+  id          String    @id @default(uuid()) @db.Uuid
+  userId      String    @map("user_id") @db.Uuid
+  tokenHash   String    @map("token_hash") @db.VarChar(255)
+  expiresAt   DateTime  @map("expires_at") @db.Timestamptz(6)
+  revokedAt   DateTime? @map("revoked_at") @db.Timestamptz(6)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  lastUsedAt  DateTime? @map("last_used_at") @db.Timestamptz(6)
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tokenHash])
+  @@map("refresh_tokens")
+}
+
+model PasswordResetToken {
+  id          String    @id @default(uuid()) @db.Uuid
+  userId      String    @map("user_id") @db.Uuid
+  tokenHash   String    @map("token_hash") @db.VarChar(255)
+  expiresAt   DateTime  @map("expires_at") @db.Timestamptz(6)
+  usedAt      DateTime? @map("used_at") @db.Timestamptz(6)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tokenHash])
+  @@map("password_reset_tokens")
+}
+
+// ==============================================================================
+// USER PROFILE FOUNDATION
+// ==============================================================================
+
+enum Gender {
+  MALE
+  FEMALE
+  TRANSGENDER
+  PREFER_NOT_TO_SAY
+  OTHER
+}
+
+model UserProfile {
+  id           String    @id @default(uuid()) @db.Uuid
+  userId       String    @unique @map("user_id") @db.Uuid
+  fullName     String?   @map("full_name") @db.VarChar(150)
+  dateOfBirth  DateTime? @map("date_of_birth") @db.Date
+  age          Int?      @map("age")
+  gender       Gender?   @default(PREFER_NOT_TO_SAY)
+  mobileNumber String?   @map("mobile_number") @db.VarChar(20)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Sub-profiles
+  location     LocationProfile?
+  education    EducationProfile?
+  financial    FinancialProfile?
+  social       SocialEligibilityProfile?
+  occupation   OccupationProfile?
+
+  @@map("user_profiles")
+}
+
+enum AreaType {
+  RURAL
+  URBAN
+  SEMI_URBAN
+}
+
+model LocationProfile {
+  id         String      @id @default(uuid()) @db.Uuid
+  profileId  String      @unique @map("profile_id") @db.Uuid
+  state      String?     @db.VarChar(100)
+  district   String?     @db.VarChar(100)
+  cityTown   String?     @map("city_town") @db.VarChar(100)
+  pincode    String?     @db.VarChar(10)
+  areaType   AreaType?   @default(RURAL) @map("area_type")
+  createdAt  DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  profile    UserProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@map("location_profiles")
+}
+
+enum EducationLevel {
+  SCHOOL
+  HIGHER_SECONDARY
+  UNDERGRADUATE
+  POSTGRADUATE
+  DIPLOMA
+  DOCTORATE
+  ITI
+  OTHER
+}
+
+enum InstitutionType {
+  GOVERNMENT
+  GOVERNMENT_AIDED
+  PRIVATE
+  AUTONOMOUS
+  CENTRAL_UNIVERSITY
+  DEEMED_UNIVERSITY
+  OTHER
+}
+
+model EducationProfile {
+  id                 String           @id @default(uuid()) @db.Uuid
+  profileId          String           @unique @map("profile_id") @db.Uuid
+  educationLevel     EducationLevel?  @map("education_level")
+  courseName         String?          @map("course_name") @db.VarChar(150)
+  specialization     String?          @db.VarChar(150)
+  institutionType    InstitutionType? @map("institution_type")
+  institutionName    String?          @map("institution_name") @db.VarChar(200)
+  yearOfStudy        Int?             @map("year_of_study")
+  academicPercentage Decimal?         @map("academic_percentage") @db.Decimal(5, 2)
+  academicCgpa       Decimal?         @map("academic_cgpa") @db.Decimal(4, 2)
+  passingYear        Int?             @map("passing_year")
+  createdAt          DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  profile            UserProfile      @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@map("education_profiles")
+}
+
+enum IncomeRange {
+  BELOW_1_LAKH
+  BETWEEN_1_AND_2_5_LAKH
+  BETWEEN_2_5_AND_5_LAKH
+  BETWEEN_5_AND_8_LAKH
+  ABOVE_8_LAKH
+}
+
+model FinancialProfile {
+  id                 String       @id @default(uuid()) @db.Uuid
+  profileId          String       @unique @map("profile_id") @db.Uuid
+  annualFamilyIncome Decimal?     @map("annual_family_income") @db.Decimal(12, 2)
+  incomeRange        IncomeRange? @map("income_range")
+  incomeSource       String?      @map("income_source") @db.VarChar(100)
+  bplCardHolder      Boolean?     @default(false) @map("bpl_card_holder")
+  createdAt          DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  profile            UserProfile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@map("financial_profiles")
+}
+
+enum SocialCategory {
+  GENERAL
+  OBC
+  SC
+  ST
+  EWS
+  OTHER
+  PREFER_NOT_TO_SAY
+}
+
+model SocialEligibilityProfile {
+  id                         String          @id @default(uuid()) @db.Uuid
+  profileId                  String          @unique @map("profile_id") @db.Uuid
+  category                   SocialCategory? @default(PREFER_NOT_TO_SAY)
+  minorityStatus             Boolean?        @default(false) @map("minority_status")
+  minorityCommunity          String?         @map("minority_community") @db.VarChar(50)
+  disabilityStatus           Boolean?        @default(false) @map("disability_status")
+  disabilityPercentage       Int?            @map("disability_percentage")
+  disabilityType             String?         @map("disability_type") @db.VarChar(100)
+  isFirstGenerationGraduate  Boolean?        @default(false) @map("is_first_generation_graduate")
+  singleGirlChild            Boolean?        @default(false) @map("single_girl_child")
+  orphanStatus               Boolean?        @default(false) @map("orphan_status")
+  createdAt                  DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                  DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  profile                    UserProfile     @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@map("social_eligibility_profiles")
+}
+
+enum OccupationType {
+  STUDENT
+  EMPLOYED
+  UNEMPLOYED
+  FARMER
+  SELF_EMPLOYED
+  BUSINESS_OWNER
+  HOMEMAKER
+  RETIRED
+  OTHER
+}
+
+enum FarmerCategory {
+  MARGINAL_FARMER
+  SMALL_FARMER
+  LARGE_FARMER
+  NONE
+}
+
+model OccupationProfile {
+  id               String          @id @default(uuid()) @db.Uuid
+  profileId        String          @unique @map("profile_id") @db.Uuid
+  occupationType   OccupationType? @default(STUDENT) @map("occupation_type")
+  employmentStatus String?         @map("employment_status") @db.VarChar(100)
+  organizationName String?         @map("organization_name") @db.VarChar(150)
+  farmerCategory   FarmerCategory? @default(NONE) @map("farmer_category")
+  createdAt        DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  profile          UserProfile     @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@map("occupation_profiles")
+}
+
+enum PreferenceCategory {
+  SCHOLARSHIPS
+  EDUCATION
+  AGRICULTURE
+  EMPLOYMENT
+  ENTREPRENEURSHIP
+  HOUSING
+  HEALTHCARE
+  INSURANCE
+  PENSION
+  SKILL_DEVELOPMENT
+  LOANS
+  SUBSIDIES
+}
+
+model UserPreference {
+  id        String             @id @default(uuid()) @db.Uuid
+  userId    String             @map("user_id") @db.Uuid
+  category  PreferenceCategory
+  createdAt DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, category])
+  @@map("user_preferences")
+}
+
+enum ConsentType {
+  PROFILE_PROCESSING
+  RECOMMENDATION_PROCESSING
+  DOCUMENT_PROCESSING
+  OCR_PROCESSING
+  AI_ASSISTANCE
+  NOTIFICATIONS
+}
+
+model Consent {
+  id          String      @id @default(uuid()) @db.Uuid
+  userId      String      @map("user_id") @db.Uuid
+  consentType ConsentType @map("consent_type")
+  granted     Boolean     @default(false)
+  version     String      @default("1.0") @db.VarChar(20)
+  grantedAt   DateTime?   @map("granted_at") @db.Timestamptz(6)
+  revokedAt   DateTime?   @map("revoked_at") @db.Timestamptz(6)
+  createdAt   DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, consentType])
+  @@map("consents")
+}
+
+// ==============================================================================
+// MODULE 3: SCHEME & SCHOLARSHIP MANAGEMENT
+// ==============================================================================
+
+enum DepartmentLevel {
+  CENTRAL
+  STATE
+  DISTRICT
+  LOCAL
+  INSTITUTIONAL
+  OTHER
+}
+
+model Department {
+  id              String          @id @default(uuid()) @db.Uuid
+  name            String          @db.VarChar(200)
+  shortName       String?         @map("short_name") @db.VarChar(50)
+  level           DepartmentLevel @default(STATE)
+  state           String?         @db.VarChar(100)
+  description     String?         @db.Text
+  officialWebsite String?         @map("official_website") @db.VarChar(500)
+  createdAt       DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  schemes         Scheme[]
+
+  @@map("departments")
+}
+
+enum ProgramType {
+  SCHOLARSHIP
+  WELFARE_SCHEME
+  SUBSIDY
+  LOAN
+  INSURANCE
+  PENSION
+  TRAINING
+  EMPLOYMENT
+  ENTREPRENEURSHIP
+  HEALTHCARE
+  HOUSING
+  AGRICULTURE
+  EDUCATION
+  OTHER
+}
+
+enum SchemeCategory {
+  EDUCATION
+  AGRICULTURE
+  EMPLOYMENT
+  HEALTH
+  HOUSING
+  FINANCIAL_ASSISTANCE
+  ENTREPRENEURSHIP
+  SOCIAL_SECURITY
+  SKILL_DEVELOPMENT
+  WOMEN
+  CHILDREN
+  SENIOR_CITIZENS
+  PERSONS_WITH_DISABILITIES
+  STUDENT_SUPPORT
+  OTHER
+}
+
+enum SchemeStatus {
+  DRAFT
+  PENDING_VERIFICATION
+  VERIFIED
+  PUBLISHED
+  ACTIVE
+  EXPIRED
+  DISCONTINUED
+  ARCHIVED
+}
+
+enum VerificationStatus {
+  UNVERIFIED
+  PENDING
+  VERIFIED
+  REJECTED
+  NEEDS_REVIEW
+}
+
+enum ApplicationMethod {
+  ONLINE
+  OFFLINE
+  ONLINE_AND_OFFLINE
+  THROUGH_INSTITUTION
+  THROUGH_DEPARTMENT
+  OTHER
+}
+
+enum ApplicationCycleStatus {
+  OPEN
+  CLOSED
+  UPCOMING
+  EXTENDED
+}
+
+model Scheme {
+  id                         String             @id @default(uuid()) @db.Uuid
+  slug                       String             @unique @db.VarChar(255)
+  name                       String             @db.VarChar(255)
+  shortName                  String?            @map("short_name") @db.VarChar(100)
+  description                String             @db.Text
+  shortDescription           String?            @map("short_description") @db.VarChar(500)
+  programType                ProgramType        @map("program_type")
+  categories                 SchemeCategory[]   @map("categories")
+  departmentId               String             @map("department_id") @db.Uuid
+  ministry                   String?            @db.VarChar(200)
+  stateScope                 String             @default("ALL_INDIA") @map("state_scope") @db.VarChar(100)
+  status                     SchemeStatus       @default(DRAFT)
+  verificationStatus         VerificationStatus @default(UNVERIFIED) @map("verification_status")
+  officialSourceUrl          String             @map("official_source_url") @db.VarChar(500)
+  officialApplicationUrl     String?            @map("official_application_url") @db.VarChar(500)
+  applicationMethod          ApplicationMethod  @default(ONLINE) @map("application_method")
+  applicationInstructions    String?            @map("application_instructions") @db.Text
+  officialNotificationTitle  String?            @map("official_notification_title") @db.VarChar(255)
+  officialNotificationUrl    String?            @map("official_notification_url") @db.VarChar(500)
+  referenceNumber            String?            @map("reference_number") @db.VarChar(100)
+  currentVersion             Int                @default(1) @map("current_version")
+  isPublished                Boolean            @default(false) @map("is_published")
+  publishedAt                DateTime?          @map("published_at") @db.Timestamptz(6)
+  publishedBy                String?            @map("published_by") @db.Uuid
+  lastVerifiedAt             DateTime?          @map("last_verified_at") @db.Timestamptz(6)
+  verifiedBy                 String?            @map("verified_by") @db.Uuid
+  verificationNotes          String?            @map("verification_notes") @db.Text
+  createdBy                  String?            @map("created_by") @db.Uuid
+  updatedBy                  String?            @map("updated_by") @db.Uuid
+  createdAt                  DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                  DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  department                 Department         @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  benefits                   Benefit[]
+  documents                  DocumentRequirement[]
+  applicationPeriods         ApplicationPeriod[]
+  eligibilityRules           EligibilityRule[]
+  versions                   SchemeVersion[]
+  recommendations            Recommendation[]
+  savedBy                    SavedScheme[]
+  recentlyViewedBy           RecentlyViewedScheme[]
+
+  @@index([status])
+  @@index([verificationStatus])
+  @@index([programType])
+  @@index([departmentId])
+  @@index([stateScope])
+  @@index([isPublished])
+  @@map("schemes")
+}
+
+enum BenefitType {
+  SCHOLARSHIP
+  SUBSIDY
+  LOAN
+  INSURANCE
+  PENSION
+  FEE_REIMBURSEMENT
+  EQUIPMENT
+  FINANCIAL_ASSISTANCE
+  SKILL_TRAINING
+  OTHER
+}
+
+enum BenefitFrequency {
+  ONE_TIME
+  MONTHLY
+  QUARTERLY
+  ANNUAL
+  PER_SEMESTER
+  AS_PER_NORMS
+}
+
+model Benefit {
+  id          String           @id @default(uuid()) @db.Uuid
+  schemeId    String           @map("scheme_id") @db.Uuid
+  benefitType BenefitType      @map("benefit_type")
+  amount      Decimal?         @db.Decimal(12, 2)
+  maxAmount   Decimal?         @map("max_amount") @db.Decimal(12, 2)
+  currency    String           @default("INR") @db.VarChar(10)
+  frequency   BenefitFrequency @default(ANNUAL)
+  duration    String?          @db.VarChar(100)
+  description String?          @db.Text
+  isVariable  Boolean          @default(false) @map("is_variable")
+  createdAt   DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  scheme      Scheme           @relation(fields: [schemeId], references: [id], onDelete: Cascade)
+
+  @@index([schemeId])
+  @@map("benefits")
+}
+
+model DocumentRequirement {
+  id               String   @id @default(uuid()) @db.Uuid
+  schemeId         String   @map("scheme_id") @db.Uuid
+  documentType     String   @map("document_type") @db.VarChar(100)
+  name             String   @db.VarChar(150)
+  description      String?  @db.Text
+  mandatory        Boolean  @default(true)
+  issuingAuthority String?  @map("issuing_authority") @db.VarChar(150)
+  notes            String?  @db.Text
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  scheme           Scheme   @relation(fields: [schemeId], references: [id], onDelete: Cascade)
+
+  @@index([schemeId])
+  @@map("document_requirements")
+}
+
+model ApplicationPeriod {
+  id                   String                 @id @default(uuid()) @db.Uuid
+  schemeId             String                 @map("scheme_id") @db.Uuid
+  title                String                 @db.VarChar(150)
+  academicYear         String?                @map("academic_year") @db.VarChar(50)
+  financialYear        String?                @map("financial_year") @db.VarChar(50)
+  applicationOpenDate  DateTime?              @map("application_open_date") @db.Date
+  applicationCloseDate DateTime?              @map("application_close_date") @db.Date
+  status               ApplicationCycleStatus @default(OPEN)
+  instructions         String?                @db.Text
+  createdAt            DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime               @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  scheme               Scheme                 @relation(fields: [schemeId], references: [id], onDelete: Cascade)
+
+  @@index([schemeId])
+  @@index([status])
+  @@map("application_periods")
+}
+
+enum RuleOperator {
+  EQUALS
+  NOT_EQUALS
+  GREATER_THAN
+  GREATER_THAN_OR_EQUAL
+  LESS_THAN
+  LESS_THAN_OR_EQUAL
+  IN
+  NOT_IN
+  BETWEEN
+  CONTAINS
+  EXISTS
+  NOT_EXISTS
+}
+
+enum RuleDataType {
+  NUMBER
+  STRING
+  BOOLEAN
+  ARRAY
+}
+
+model EligibilityRule {
+  id              String       @id @default(uuid()) @db.Uuid
+  schemeId        String       @map("scheme_id") @db.Uuid
+  ruleGroup       String?      @default("DEFAULT") @map("rule_group") @db.VarChar(50)
+  field           String       @db.VarChar(100)
+  operator        RuleOperator
+  value           Json
+  dataType        RuleDataType @default(STRING) @map("data_type")
+  mandatory       Boolean      @default(true)
+  description     String       @db.VarChar(500)
+  order           Int          @default(0)
+  logicalOperator String       @default("AND") @map("logical_operator") @db.VarChar(10)
+  createdAt       DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  scheme          Scheme       @relation(fields: [schemeId], references: [id], onDelete: Cascade)
+
+  @@index([schemeId])
+  @@map("eligibility_rules")
+}
+
+model SchemeVersion {
+  id             String    @id @default(uuid()) @db.Uuid
+  schemeId       String    @map("scheme_id") @db.Uuid
+  versionNumber  Int       @map("version_number")
+  effectiveFrom  DateTime  @default(now()) @map("effective_from") @db.Timestamptz(6)
+  effectiveUntil DateTime? @map("effective_until") @db.Timestamptz(6)
+  changeSummary  String    @map("change_summary") @db.VarChar(500)
+  snapshot       Json      @db.JsonB
+  createdBy      String?   @map("created_by") @db.Uuid
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  scheme         Scheme           @relation(fields: [schemeId], references: [id], onDelete: Cascade)
+  recommendations Recommendation[]
+
+  @@unique([schemeId, versionNumber])
+  @@index([schemeId])
+  @@map("scheme_versions")
+}
+
+// ==============================================================================
+// MODULE 4: RULE-BASED RECOMMENDATION ENGINE
+// ==============================================================================
+
+enum RecommendationEligibilityStatus {
+  ELIGIBLE
+  LIKELY_ELIGIBLE
+  NEEDS_VERIFICATION
+  NOT_ELIGIBLE
+}
+
+enum RecommendationApplicationStatus {
+  OPEN
+  UPCOMING
+  CLOSED
+}
+
+model Recommendation {
+  id                String                          @id @default(uuid()) @db.Uuid
+  userId            String                          @map("user_id") @db.Uuid
+  schemeId          String                          @map("scheme_id") @db.Uuid
+  schemeVersionId   String                          @map("scheme_version_id") @db.Uuid
+  eligibilityStatus RecommendationEligibilityStatus @map("eligibility_status")
+  applicationStatus RecommendationApplicationStatus @map("application_status")
+  isExpiringSoon    Boolean                         @default(false) @map("is_expiring_soon")
+  matchedCount      Int                             @default(0) @map("matched_count")
+  failedCount       Int                             @default(0) @map("failed_count")
+  unknownCount      Int                             @default(0) @map("unknown_count")
+  evaluationDetails Json                            @map("evaluation_details") @db.JsonB
+  evaluatedAt       DateTime                        @default(now()) @map("evaluated_at") @db.Timestamptz(6)
+  createdAt         DateTime                        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime                        @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user              User                            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scheme            Scheme                          @relation(fields: [schemeId], references: [id], onDelete: Cascade)
+  schemeVersion     SchemeVersion                   @relation(fields: [schemeVersionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, schemeId, schemeVersionId])
+  @@index([userId, eligibilityStatus])
+  @@index([schemeId])
+  @@index([evaluatedAt])
+  @@map("recommendations")
+}
+
+// ==============================================================================
+// MODULE 5: SAVED SCHEMES & CITIZEN DISCOVERY
+// ==============================================================================
+
+model SavedScheme {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  schemeId  String   @map("scheme_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scheme    Scheme   @relation(fields: [schemeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, schemeId])
+  @@index([userId])
+  @@index([schemeId])
+  @@index([createdAt])
+  @@map("saved_schemes")
+}
+
+model RecentlyViewedScheme {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String   @map("user_id") @db.Uuid
+  schemeId     String   @map("scheme_id") @db.Uuid
+  lastViewedAt DateTime @default(now()) @map("last_viewed_at") @db.Timestamptz(6)
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scheme       Scheme   @relation(fields: [schemeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, schemeId])
+  @@index([userId])
+  @@index([schemeId])
+  @@index([lastViewedAt])
+  @@map("recently_viewed_schemes")
+}
+
+// ==============================================================================
+// MODULE 6: DOCUMENT MANAGEMENT, OCR & DOCUMENT READINESS
+// ==============================================================================
+
+enum DocumentCategory {
+  IDENTITY
+  INCOME
+  COMMUNITY
+  DISABILITY
+  EDUCATION
+  RESIDENCE
+  BANK
+  EMPLOYMENT
+  AGRICULTURE
+  BUSINESS
+  AGE_PROOF
+  ADDRESS_PROOF
+  OTHER
+}
+
+enum DocumentStatus {
+  UPLOADED
+  PROCESSING
+  READY
+  NEEDS_REVIEW
+  EXPIRED
+  REJECTED
+  ARCHIVED
+}
+
+enum OcrStatus {
+  NOT_REQUESTED
+  QUEUED
+  PROCESSING
+  COMPLETED
+  FAILED
+  LOW_CONFIDENCE
+}
+
+enum DocumentVerificationStatus {
+  UNVERIFIED
+  PENDING_REVIEW
+  VERIFIED_FOR_USE
+  REJECTED
+}
+
+enum OcrExtractionStatus {
+  PENDING_REVIEW
+  CONFIRMED
+  CORRECTED
+  DISCARDED
+}
+
+enum DocumentAuditAction {
+  DOCUMENT_UPLOADED
+  DOCUMENT_VIEWED
+  DOCUMENT_DOWNLOADED
+  DOCUMENT_DELETED
+  DOCUMENT_REPLACED
+  OCR_REQUESTED
+  OCR_COMPLETED
+  OCR_FAILED
+  EXTRACTION_REVIEWED
+  EXTRACTION_CONFIRMED
+  PROFILE_UPDATE_FROM_DOCUMENT_CONFIRMED
+}
+
+model UserDocument {
+  id                   String                     @id @default(uuid()) @db.Uuid
+  userId               String                     @map("user_id") @db.Uuid
+  documentGroupId      String                     @map("document_group_id") @db.VarChar(100)
+  version              Int                        @default(1)
+  isCurrent            Boolean                    @default(true) @map("is_current")
+  documentType         String                     @map("document_type") @db.VarChar(100)
+  documentCategory     DocumentCategory           @default(OTHER) @map("document_category")
+  originalFileName     String                     @map("original_file_name") @db.VarChar(255)
+  storedFileName       String                     @map("stored_file_name") @db.VarChar(255)
+  storageKey           String                     @unique @map("storage_key") @db.VarChar(255)
+  mimeType             String                     @map("mime_type") @db.VarChar(100)
+  fileSize             Int                        @map("file_size")
+  checksum             String                     @map("checksum") @db.VarChar(100)
+  storageProvider      String                     @default("LOCAL") @map("storage_provider") @db.VarChar(50)
+  documentStatus       DocumentStatus             @default(UPLOADED) @map("document_status")
+  ocrStatus            OcrStatus                  @default(NOT_REQUESTED) @map("ocr_status")
+  verificationStatus   DocumentVerificationStatus @default(UNVERIFIED) @map("verification_status")
+  issuedAt             DateTime?                  @map("issued_at") @db.Date
+  expiresAt            DateTime?                  @map("expires_at") @db.Date
+  issuingAuthority     String?                    @map("issuing_authority") @db.VarChar(150)
+  documentNumberMasked String?                    @map("document_number_masked") @db.VarChar(50)
+  ocrVersion           String?                    @map("ocr_version") @db.VarChar(20)
+  ocrConsent           Boolean                    @default(false) @map("ocr_consent")
+  ocrConsentedAt       DateTime?                  @map("ocr_consented_at") @db.Timestamptz(6)
+  deletedAt            DateTime?                  @map("deleted_at") @db.Timestamptz(6)
+  deletedBy            String?                    @map("deleted_by") @db.Uuid
+  createdAt            DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime                   @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user                 User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  extractions          DocumentExtraction[]
+
+  @@index([userId, documentType])
+  @@index([userId, isCurrent])
+  @@index([userId, documentStatus])
+  @@index([documentGroupId])
+  @@index([checksum])
+  @@map("user_documents")
+}
+
+model DocumentExtraction {
+  id                  String              @id @default(uuid()) @db.Uuid
+  documentId          String              @map("document_id") @db.Uuid
+  ocrText             String?             @map("ocr_text") @db.Text
+  structuredFields    Json                @map("structured_fields") @db.JsonB
+  confidence          Float               @default(0.0)
+  provider            String              @default("LOCAL_OCR") @map("provider") @db.VarChar(50)
+  providerVersion     String              @default("1.0.0") @map("provider_version") @db.VarChar(20)
+  status              OcrExtractionStatus @default(PENDING_REVIEW)
+  confirmedValues     Json?               @map("confirmed_values") @db.JsonB
+  confirmedAt         DateTime?           @map("confirmed_at") @db.Timestamptz(6)
+  confirmedBy         String?             @map("confirmed_by") @db.Uuid
+  appliedToProfile    Boolean             @default(false) @map("applied_to_profile")
+  appliedToProfileAt  DateTime?           @map("applied_to_profile_at") @db.Timestamptz(6)
+  processedAt         DateTime            @default(now()) @map("processed_at") @db.Timestamptz(6)
+  createdAt           DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  document            UserDocument        @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId])
+  @@map("document_extractions")
+}
+
+model DocumentAuditLog {
+  id         String              @id @default(uuid()) @db.Uuid
+  userId     String              @map("user_id") @db.Uuid
+  documentId String?             @map("document_id") @db.Uuid
+  action     DocumentAuditAction
+  metadata   Json?               @db.JsonB
+  ipAddress  String?             @map("ip_address") @db.VarChar(45)
+  userAgent  String?             @map("user_agent") @db.Text
+  createdAt  DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user       User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, action])
+  @@index([documentId])
+  @@index([createdAt])
+  @@map("document_audit_logs")
+}
+
+// ==============================================================================
+// MODULE 7: NOTIFICATIONS, DEADLINE REMINDERS & USER ALERTS
+// ==============================================================================
+
+enum NotificationType {
+  SCHEME_OPENING_SOON
+  SCHEME_DEADLINE_APPROACHING
+  SCHEME_DEADLINE_TODAY
+  SCHEME_DEADLINE_CHANGED
+  SCHEME_UPDATED
+  SCHEME_CLOSED
+  RECOMMENDATION_AVAILABLE
+  RECOMMENDATION_CHANGED
+  PROFILE_INFORMATION_NEEDED
+  DOCUMENT_EXPIRING
+  DOCUMENT_EXPIRED
+  DOCUMENT_PROCESSING_COMPLETED
+  DOCUMENT_PROCESSING_FAILED
+  DOCUMENT_REVIEW_REQUIRED
+  SYSTEM_ANNOUNCEMENT
+  SECURITY_ALERT
+}
+
+enum NotificationSeverity {
+  INFO
+  IMPORTANT
+  WARNING
+}
+
+enum NotificationChannel {
+  IN_APP
+  EMAIL
+}
+
+enum NotificationStatus {
+  UNREAD
+  READ
+  ARCHIVED
+}
+
+model Notification {
+  id               String               @id @default(uuid()) @db.Uuid
+  userId           String               @map("user_id") @db.Uuid
+  type             NotificationType
+  title            String               @db.VarChar(200)
+  message          String               @db.Text
+  severity         NotificationSeverity @default(INFO)
+  channel          NotificationChannel  @default(IN_APP)
+  status           NotificationStatus   @default(UNREAD)
+  readAt           DateTime?            @map("read_at") @db.Timestamptz(6)
+  sentAt           DateTime?            @map("sent_at") @db.Timestamptz(6)
+  scheduledFor     DateTime?            @map("scheduled_for") @db.Timestamptz(6)
+  expiresAt        DateTime?            @map("expires_at") @db.Timestamptz(6)
+  entityType       String?              @map("entity_type") @db.VarChar(50)
+  entityId         String?              @map("entity_id") @db.VarChar(100)
+  actionUrl        String?              @map("action_url") @db.VarChar(255)
+  metadata         Json?                @db.JsonB
+  deduplicationKey String?              @map("deduplication_key") @db.VarChar(255)
+  deletedAt        DateTime?            @map("deleted_at") @db.Timestamptz(6)
+  createdAt        DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime             @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user             User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@index([userId, createdAt])
+  @@index([userId, deduplicationKey])
+  @@index([expiresAt])
+  @@index([scheduledFor])
+  @@map("notifications")
+}
+
+model NotificationPreference {
+  id                    String   @id @default(uuid()) @db.Uuid
+  userId                String   @unique @map("user_id") @db.Uuid
+  deadlineReminders     Boolean  @default(true) @map("deadline_reminders")
+  schemeUpdates         Boolean  @default(true) @map("scheme_updates")
+  recommendationUpdates Boolean  @default(true) @map("recommendation_updates")
+  documentAlerts        Boolean  @default(true) @map("document_alerts")
+  emailEnabled          Boolean  @default(true) @map("email_enabled")
+  inAppEnabled          Boolean  @default(true) @map("in_app_enabled")
+  createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notification_preferences")
+}
+
+// ==============================================================================
+// MODULE 8: AI ASSISTANT, CONVERSATIONS & USAGE TRACKING
+// ==============================================================================
+
+enum ConversationRole {
+  USER
+  ASSISTANT
+  SYSTEM
+  TOOL
+}
+
+enum AssistantContextType {
+  GENERAL
+  SCHEME
+  RECOMMENDATION
+  DOCUMENT
+  NOTIFICATION
+  PROFILE
+  COMPARISON
+}
+
+model Conversation {
+  id          String               @id @default(uuid()) @db.Uuid
+  userId      String               @map("user_id") @db.Uuid
+  title       String               @db.VarChar(255)
+  contextType AssistantContextType @default(GENERAL) @map("context_type")
+  contextId   String?              @map("context_id") @db.VarChar(255)
+  language    String               @default("en") @db.VarChar(10)
+  deletedAt   DateTime?            @map("deleted_at") @db.Timestamptz(6)
+  createdAt   DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime             @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user        User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages    ConversationMessage[]
+  aiUsages    AiUsage[]
+
+  @@index([userId, deletedAt])
+  @@index([userId, createdAt])
+  @@map("conversations")
+}
+
+model ConversationMessage {
+  id             String           @id @default(uuid()) @db.Uuid
+  conversationId String           @map("conversation_id") @db.Uuid
+  role           ConversationRole
+  content        String           @db.Text
+  intent         String?          @db.VarChar(100)
+  sources        Json?            @db.JsonB
+  actions        Json?            @db.JsonB
+  metadata       Json?            @db.JsonB
+  createdAt      DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  conversation   Conversation     @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+  @@map("conversation_messages")
+}
+
+model AiUsage {
+  id             String        @id @default(uuid()) @db.Uuid
+  userId         String        @map("user_id") @db.Uuid
+  conversationId String?       @map("conversation_id") @db.Uuid
+  model          String        @db.VarChar(100)
+  inputTokens    Int           @default(0) @map("input_tokens")
+  outputTokens   Int           @default(0) @map("output_tokens")
+  durationMs     Int           @default(0) @map("duration_ms")
+  status         String        @db.VarChar(50)
+  createdAt      DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversation   Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([conversationId])
+  @@map("ai_usages")
+}
+
+// ==============================================================================
+// MODULE 9: ANALYTICS, AUDIT, MONITORING & ADMINISTRATIVE INTELLIGENCE
+// ==============================================================================
+
+enum AnalyticsCategory {
+  USER
+  SCHEME
+  RECOMMENDATION
+  DOCUMENT
+  OCR
+  NOTIFICATION
+  AI
+  SEARCH
+  ADMIN
+  SECURITY
+  SYSTEM
+}
+
+model AnalyticsEvent {
+  id         String            @id @default(uuid()) @db.Uuid
+  eventType  String            @map("event_type") @db.VarChar(100)
+  category   AnalyticsCategory @default(SYSTEM)
+  actorType  String            @default("USER") @map("actor_type") @db.VarChar(50)
+  actorId    String?           @map("actor_id") @db.VarChar(100)
+  entityType String?           @map("entity_type") @db.VarChar(100)
+  entityId   String?           @map("entity_id") @db.VarChar(100)
+  metadata   Json?             @db.JsonB
+  sessionId  String?           @map("session_id") @db.VarChar(100)
+  requestId  String?           @map("request_id") @db.VarChar(100)
+  timestamp  DateTime          @default(now()) @db.Timestamptz(6)
+
+  @@index([eventType, timestamp])
+  @@index([category, timestamp])
+  @@index([actorId, timestamp])
+  @@index([entityType, entityId, timestamp])
+  @@index([timestamp])
+  @@map("analytics_events")
+}
+
+enum AuditResult {
+  SUCCESS
+  FAILURE
+}
+
+model AuditLog {
+  id          String      @id @default(uuid()) @db.Uuid
+  actorUserId String?     @map("actor_user_id") @db.Uuid
+  actorEmail  String?     @map("actor_email") @db.VarChar(255)
+  actorRole   String      @map("actor_role") @db.VarChar(50)
+  action      String      @db.VarChar(100)
+  entityType  String      @map("entity_type") @db.VarChar(100)
+  entityId    String?     @map("entity_id") @db.VarChar(100)
+  result      AuditResult @default(SUCCESS)
+  ipAddress   String?     @map("ip_address") @db.VarChar(100)
+  userAgent   String?     @map("user_agent") @db.VarChar(255)
+  requestId   String?     @map("request_id") @db.VarChar(100)
+  metadata    Json?       @db.JsonB
+  timestamp   DateTime    @default(now()) @db.Timestamptz(6)
+
+  actor       User?       @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([actorUserId, timestamp])
+  @@index([action, timestamp])
+  @@index([entityType, timestamp])
+  @@index([requestId])
+  @@index([timestamp])
+  @@map("audit_logs")
+}
+
+
+
+
+
