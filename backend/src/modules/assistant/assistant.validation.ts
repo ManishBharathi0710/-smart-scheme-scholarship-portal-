@@ -57,6 +57,11 @@ export class ResponseValidationService {
     if (groundedContext.notification?.actionUrl) {
       allowedUrls.add(groundedContext.notification.actionUrl);
     }
+    if (groundedContext.matchingSchemes?.length) {
+      groundedContext.matchingSchemes.forEach((s) => {
+        if (s.officialApplicationUrl) allowedUrls.add(s.officialApplicationUrl);
+      });
+    }
 
     // Sanitize actions
     const validatedActions = response.actions.filter((action) => {

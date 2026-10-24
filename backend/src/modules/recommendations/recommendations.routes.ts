@@ -33,6 +33,7 @@ recommendationsRouter.post('/refresh', recommendationsController.refreshUserReco
  * Status counts for dashboard overview
  */
 recommendationsRouter.get('/summary/counts', recommendationsController.getSummaryCounts);
+recommendationsRouter.get('/counts', recommendationsController.getSummaryCounts);
 
 /**
  * GET /api/v1/recommendations/:id

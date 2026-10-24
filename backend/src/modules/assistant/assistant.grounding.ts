@@ -8,7 +8,9 @@ import { recommendationTool } from './tools/recommendation.tool.js';
 import { documentTool } from './tools/document.tool.js';
 import { notificationTool } from './tools/notification.tool.js';
 import { profileTool } from './tools/profile.tool.js';
-import { AssistantContextType } from '@prisma/client';
+import { schemesService } from '../schemes/schemes.service.js';
+import { AssistantContextType, SchemeCategory } from '@prisma/client';
+import { SchemeFilterQuery } from '../schemes/schemes.types.js';
 
 export class GroundingService {
   /**
@@ -34,27 +36,10 @@ export class GroundingService {
       text.includes('compare') ||
       text.includes('difference') ||
       text.includes('vs ') ||
-      text.includes('versus')
+      text.includes('versus') ||
+      text.includes('central and state')
     ) {
       return 'COMPARE_SCHEMES';
-    }
-    if (
-      text.includes('eligible') ||
-      text.includes('qualify') ||
-      text.includes('why am i') ||
-      text.includes('assessment') ||
-      text.includes('recommendation')
-    ) {
-      return 'EXPLAIN_ELIGIBILITY';
-    }
-    if (
-      text.includes('document') ||
-      text.includes('certificate') ||
-      text.includes('ocr') ||
-      text.includes('proof') ||
-      text.includes('income certificate')
-    ) {
-      return text.includes('ocr') ? 'EXPLAIN_OCR_RESULT' : 'EXPLAIN_DOCUMENTS';
     }
     if (
       text.includes('how to apply') ||
@@ -79,11 +64,37 @@ export class GroundingService {
     ) {
       return 'EXPLAIN_NOTIFICATION';
     }
-    if (text.includes('help') || text.includes('portal') || text.includes('guide')) {
-      return 'HELP_WITH_PORTAL';
+    if (
+      text.includes('document') ||
+      text.includes('certificate') ||
+      text.includes('ocr') ||
+      text.includes('proof') ||
+      text.includes('income certificate') ||
+      text.includes('prepare my document')
+    ) {
+      return text.includes('ocr') ? 'EXPLAIN_OCR_RESULT' : 'EXPLAIN_DOCUMENTS';
+    }
+    if (
+      text.includes('eligible') ||
+      text.includes('qualify') ||
+      text.includes('why am i') ||
+      text.includes('assessment')
+    ) {
+      return 'EXPLAIN_ELIGIBILITY';
     }
     if (context?.schemeId || context?.contextId) {
       return 'EXPLAIN_SCHEME';
+    }
+    if (
+      text.includes('recommendation') ||
+      text.includes('scholarship') ||
+      text.includes('education profile') ||
+      text.includes('match')
+    ) {
+      return 'EXPLAIN_ELIGIBILITY';
+    }
+    if (text.includes('help') || text.includes('portal') || text.includes('guide')) {
+      return 'HELP_WITH_PORTAL';
     }
 
     return 'GENERAL_SCHEME_QUESTION';
@@ -97,8 +108,10 @@ export class GroundingService {
     userId: string,
     intent: AssistantIntent,
     context?: AssistantChatContextInput,
+    message?: string,
   ): Promise<GroundedContextData> {
     const grounded: GroundedContextData = {};
+    const text = (message || '').toLowerCase();
     const targetSchemeId =
       context?.schemeId ||
       (context?.contextType === AssistantContextType.SCHEME ? context.contextId : undefined);
@@ -182,11 +195,49 @@ export class GroundingService {
       }
     }
 
-    // 6. Module 2: Minimized Profile Context (only when evaluating conditions)
-    if (intent === 'EXPLAIN_ELIGIBILITY') {
+    // 6. Module 2: Minimized Profile Context (Available for authorized citizen guidance)
+    if (userId) {
       const profile = await profileTool.getProfileSummary(userId);
       if (profile) {
         grounded.profileSummary = profile;
+      }
+    }
+
+    // 7. Catalog Search / Scheme Grounding when no single scheme selected
+    if (!grounded.scheme && text) {
+      try {
+        const isScholarshipSearch =
+          text.includes('scholarship') ||
+          text.includes('education') ||
+          text.includes('match my education');
+        const filterQuery: SchemeFilterQuery = isScholarshipSearch
+          ? { category: SchemeCategory.EDUCATION, pageSize: 6 }
+          : { pageSize: 6 };
+
+        const catalog = await schemesService.getPublishedSchemes(filterQuery, userId);
+        if (catalog?.items?.length) {
+          grounded.matchingSchemes = catalog.items.map((s) => ({
+            id: s.id,
+            slug: s.slug,
+            name: s.name,
+            shortDescription: s.shortDescription || undefined,
+            programType: s.programType,
+            categories: s.categories,
+            department: s.departmentName,
+            primaryBenefit: s.primaryBenefit
+              ? {
+                  type: s.primaryBenefit.type,
+                  amount: s.primaryBenefit.amount,
+                  frequency: s.primaryBenefit.frequency,
+                  description: s.primaryBenefit.description,
+                }
+              : null,
+            applicationStatus: s.activeApplicationPeriod?.status || 'OPEN',
+            officialApplicationUrl: `/schemes/${s.slug}`,
+          }));
+        }
+      } catch {
+        // Non-blocking catalog retrieval
       }
     }
 

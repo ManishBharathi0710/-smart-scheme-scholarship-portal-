@@ -158,7 +158,9 @@ export class DashboardService {
       topRecommendations: recsResult.items || [],
       closingSoon: closingSoonResult.items || [],
       savedSchemes: {
+        total: savedResult.pagination?.total || 0,
         totalCount: savedResult.pagination?.total || 0,
+        preview: savedResult.items || [],
         items: savedResult.items || [],
       },
       actionItems,

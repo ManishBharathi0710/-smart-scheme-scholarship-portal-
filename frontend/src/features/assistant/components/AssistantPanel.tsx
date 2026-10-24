@@ -51,7 +51,7 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
       {/* Header */}
       <div className="bg-gov-900 text-white px-4 py-3 flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-full bg-gov-700 flex items-center justify-center text-amber-400">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white shadow-sm">
             <Bot className="w-4 h-4" />
           </div>
           <div>

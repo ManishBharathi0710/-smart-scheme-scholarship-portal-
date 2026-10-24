@@ -33,12 +33,13 @@ export const recommendationsApi = {
       };
     };
 
+    const items = res.data?.data ?? [];
     return {
-      items: res.data.data,
+      items,
       pagination: meta?.pagination || {
         page: 1,
         pageSize: 20,
-        total: res.data.data.length,
+        total: (items ?? []).length,
         totalPages: 1,
       },
     };
@@ -48,10 +49,60 @@ export const recommendationsApi = {
    * Retrieves single recommendation detail with explainability trace
    */
   async getRecommendationDetail(id: string): Promise<RecommendationDetail> {
-    const res = await apiClient.get<ApiSuccessResponse<RecommendationDetail>>(
+    const res = await apiClient.get<ApiSuccessResponse<any>>(
       `/recommendations/${id}`,
     );
-    return res.data.data;
+    const raw = res.data.data;
+    if (!raw) return raw;
+
+    const details = raw.evaluationDetails || {};
+    const appPeriod = raw.scheme?.applicationPeriods?.[0] || raw.scheme?.applicationPeriod;
+    const documents = raw.scheme?.documents || raw.scheme?.requiredDocuments || [];
+
+    return {
+      ...raw,
+      explanation: raw.explanation || {
+        summary: details.summary || raw.summary || '',
+        matched: (details.matchedConditions || []).map((c: any) => c.explanation || c.description || ''),
+        failed: (details.failedConditions || []).map((c: any) => c.explanation || c.description || ''),
+        unknown: (details.unknownConditions || []).map((c: any) => c.explanation || c.description || ''),
+        conditions: [
+          ...(details.matchedConditions || []),
+          ...(details.failedConditions || []),
+          ...(details.unknownConditions || []),
+        ],
+        matchedConditions: details.matchedConditions || [],
+        failedConditions: details.failedConditions || [],
+        unknownConditions: details.unknownConditions || [],
+      },
+      missingInformation: raw.missingInformation || details.missingInformation || [],
+      schemeVersion: raw.schemeVersion || {
+        id: raw.schemeVersionId || '',
+        versionNumber: raw.schemeVersionNumber || 1,
+        changeSummary: null,
+        validFrom: raw.evaluatedAt || new Date().toISOString(),
+      },
+      scheme: {
+        ...raw.scheme,
+        programType: raw.scheme?.programType || raw.programType || 'WELFARE_SCHEME',
+        department: raw.scheme?.department || raw.departmentName || 'Government Department',
+        officialPortalUrl:
+          raw.scheme?.officialApplicationUrl ||
+          raw.scheme?.officialSourceUrl ||
+          raw.scheme?.officialPortalUrl ||
+          null,
+        requiredDocuments: documents.map((d: any) => ({
+          id: d.id,
+          name: d.name,
+          mandatory: d.mandatory ?? true,
+          description: d.description || d.notes || null,
+        })),
+        applicationPeriod: {
+          applicationOpenDate: appPeriod?.openDate || appPeriod?.applicationOpenDate || null,
+          applicationCloseDate: appPeriod?.closeDate || appPeriod?.applicationCloseDate || raw.deadline || null,
+        },
+      },
+    } as RecommendationDetail;
   },
 
   /**

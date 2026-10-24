@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Prisma, SchemeStatus } from '@prisma/client';
 import { BaseRepository } from '../../database/base-repository.js';
 import { SavedSchemeQuery } from './saved-schemes.types.js';
 
@@ -110,7 +110,7 @@ export class SavedSchemesRepository extends BaseRepository {
         userId,
         scheme: {
           isPublished: true,
-          status: 'PUBLISHED',
+          status: { in: [SchemeStatus.PUBLISHED, SchemeStatus.ACTIVE] },
           verificationStatus: 'VERIFIED',
         },
       },
@@ -130,7 +130,7 @@ export class SavedSchemesRepository extends BaseRepository {
       userId,
       scheme: {
         isPublished: true,
-        status: 'PUBLISHED',
+        status: { in: [SchemeStatus.PUBLISHED, SchemeStatus.ACTIVE] },
         verificationStatus: 'VERIFIED',
         ...(programType ? { programType } : {}),
         ...(category ? { categories: { has: category } } : {}),

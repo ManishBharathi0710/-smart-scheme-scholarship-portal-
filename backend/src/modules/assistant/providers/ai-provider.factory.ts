@@ -1,5 +1,6 @@
 import { IAiProvider } from './ai-provider.interface.js';
 import { MockAiProvider } from './mock-ai-provider.js';
+import { GeminiAiProvider } from './gemini-ai-provider.js';
 import { env } from '../../../config/env.js';
 import { logger } from '../../../utils/logger.js';
 
@@ -12,25 +13,33 @@ class AiProviderFactory {
     }
 
     const providerType = env.AI_PROVIDER;
+    const apiKey = env.AI_API_KEY || process.env['GEMINI_API_KEY'];
 
     switch (providerType) {
       case 'GEMINI':
       case 'OPENAI':
-        if (!env.AI_API_KEY) {
-          logger.warn({
+        if (!apiKey) {
+          logger.info({
             provider: providerType,
-            msg: 'AI_API_KEY not configured. Falling back to secure MockAiProvider.',
+            msg: 'No external AI API key configured. Using grounded portal AI engine.',
           });
           this.providerInstance = new MockAiProvider();
         } else {
-          // Can be extended with real HTTP adapters when key is provided
-          this.providerInstance = new MockAiProvider();
+          logger.info({
+            provider: 'GEMINI',
+            msg: 'Google Gemini AI provider initialized with grounded portal context.',
+          });
+          this.providerInstance = new GeminiAiProvider();
         }
         break;
 
       case 'MOCK':
       default:
-        this.providerInstance = new MockAiProvider();
+        if (apiKey) {
+          this.providerInstance = new GeminiAiProvider();
+        } else {
+          this.providerInstance = new MockAiProvider();
+        }
         break;
     }
 

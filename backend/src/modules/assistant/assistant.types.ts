@@ -150,6 +150,23 @@ export interface GroundedContextData {
       officialApplicationUrl?: string | null;
     }>;
   };
+  matchingSchemes?: Array<{
+    id: string;
+    slug: string;
+    name: string;
+    shortDescription?: string;
+    programType: string;
+    categories: string[];
+    department: string;
+    primaryBenefit?: {
+      type: string;
+      amount?: number | null;
+      frequency?: string | null;
+      description?: string | null;
+    } | null;
+    applicationStatus?: string;
+    officialApplicationUrl?: string | null;
+  }>;
 }
 
 export interface AiPromptRequest {

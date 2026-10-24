@@ -1,4 +1,4 @@
-import { Prisma, RecommendationEligibilityStatus } from '@prisma/client';
+import { Prisma, RecommendationEligibilityStatus, SchemeStatus } from '@prisma/client';
 import { BaseRepository, PrismaTransactionClient } from '../../database/base-repository.js';
 import { RecommendationListQuery } from './recommendations.types.js';
 import { FullRecommendationEvaluation } from './engine/types.js';
@@ -25,10 +25,10 @@ export class RecommendationsRepository extends BaseRepository {
       userId,
       scheme: {
         isPublished: true,
-        status: 'PUBLISHED',
+        status: { in: [SchemeStatus.PUBLISHED, SchemeStatus.ACTIVE] },
         verificationStatus: 'VERIFIED',
         ...(programType ? { programType } : {}),
-        ...(category ? { category: { has: category } } : {}),
+        ...(category ? { categories: { has: category } } : {}),
       },
       ...(status ? { eligibilityStatus: status } : {}),
       ...(applicationStatus ? { applicationStatus } : {}),
@@ -238,7 +238,7 @@ export class RecommendationsRepository extends BaseRepository {
         userId,
         scheme: {
           isPublished: true,
-          status: 'PUBLISHED',
+          status: { in: [SchemeStatus.PUBLISHED, SchemeStatus.ACTIVE] },
         },
       },
       _count: {

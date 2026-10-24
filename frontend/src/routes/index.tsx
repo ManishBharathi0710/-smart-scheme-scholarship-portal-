@@ -9,6 +9,7 @@ import { ForgotPasswordPage } from '../features/auth/pages/ForgotPasswordPage';
 import { ResetPasswordPage } from '../features/auth/pages/ResetPasswordPage';
 import { ProfilePage } from '../features/profile/pages/ProfilePage';
 import { ProtectedRoute } from '../components/common/ProtectedRoute';
+import { ErrorBoundary } from '../components/common/ErrorBoundary';
 import { SchemesCatalogPage } from '../features/schemes/pages/SchemesCatalogPage';
 import { SchemeDetailPage } from '../features/schemes/pages/SchemeDetailPage';
 import { AdminSchemesListPage } from '../features/schemes/pages/AdminSchemesListPage';
@@ -66,7 +67,9 @@ export const router = createBrowserRouter([
         path: 'dashboard',
         element: (
           <ProtectedRoute>
-            <DashboardPage />
+            <ErrorBoundary>
+              <DashboardPage />
+            </ErrorBoundary>
           </ProtectedRoute>
         ),
       },

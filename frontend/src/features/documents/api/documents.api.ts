@@ -44,12 +44,13 @@ export const documentsApi = {
         totalPages: number;
       };
     };
+    const items = res.data?.data ?? [];
     return {
-      items: res.data.data,
+      items,
       pagination: meta?.pagination || {
         page: 1,
         limit: 20,
-        total: res.data.data.length,
+        total: (items ?? []).length,
         totalPages: 1,
       },
     };

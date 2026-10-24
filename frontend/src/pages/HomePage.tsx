@@ -137,16 +137,16 @@ export const HomePage: React.FC = () => {
       {/* =========================================================================
           HERO SECTION
           ========================================================================= */}
-      <section className="relative bg-gradient-to-br from-gov-950 via-gov-900 to-slate-900 text-white py-16 sm:py-20 border-b border-gov-800 overflow-hidden">
+      <section className="relative bg-gradient-to-br from-gov-950 via-gov-900 to-slate-950 text-white py-16 sm:py-20 border-b border-gov-800 overflow-hidden">
         {/* Background decorative glow */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(30,69,102,0.35),transparent_50%)] pointer-events-none" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(22,163,74,0.12),transparent_40%)] pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(99,102,241,0.25),transparent_50%)] pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(168,85,247,0.2),transparent_40%)] pointer-events-none" />
 
         <PageContainer className="relative py-0">
           <div className="max-w-4xl mx-auto text-center space-y-6">
             {/* National Official Badge */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gov-800/80 border border-gov-700/80 text-xs font-semibold text-amber-300 shadow-sm backdrop-blur-sm">
-              <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gov-800/80 border border-gov-700/80 text-xs font-semibold text-violet-200 shadow-sm backdrop-blur-sm">
+              <span className="flex h-2 w-2 rounded-full bg-accent-400 animate-pulse" />
               <span>National Citizen Benefit &amp; Scheme Discovery Platform</span>
               <span className="text-gov-400">&bull;</span>
               <span className="text-slate-300">Verified Ministry Catalog</span>
@@ -155,7 +155,7 @@ export const HomePage: React.FC = () => {
             {/* Main Headline */}
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight">
               Find Government Schemes &amp; Scholarships <br className="hidden sm:inline" />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-amber-200 to-emerald-300">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 via-violet-200 to-fuchsia-300">
                 You Actually Qualify For
               </span>
             </h1>
@@ -204,7 +204,7 @@ export const HomePage: React.FC = () => {
                 <Button
                   type="submit"
                   variant="primary"
-                  className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-6 py-2.5 rounded-xl shadow-md transition-all flex items-center justify-center gap-2"
+                  className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold px-6 py-2.5 rounded-xl shadow-lg shadow-indigo-600/30 transition-all flex items-center justify-center gap-2"
                 >
                   <span>Explore Schemes</span>
                   <ArrowRight className="w-4 h-4" />
@@ -217,7 +217,7 @@ export const HomePage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => navigate('/schemes?search=Post-Matric')}
-                  className="hover:text-amber-300 underline decoration-slate-600 hover:decoration-amber-300 transition-colors"
+                  className="hover:text-violet-300 underline decoration-slate-600 hover:decoration-violet-300 transition-colors"
                 >
                   Post-Matric Scholarships
                 </button>
@@ -225,7 +225,7 @@ export const HomePage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => navigate('/schemes?category=EDUCATION')}
-                  className="hover:text-amber-300 underline decoration-slate-600 hover:decoration-amber-300 transition-colors"
+                  className="hover:text-violet-300 underline decoration-slate-600 hover:decoration-violet-300 transition-colors"
                 >
                   Higher Education
                 </button>
@@ -233,7 +233,7 @@ export const HomePage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => navigate('/schemes?category=AGRICULTURE')}
-                  className="hover:text-amber-300 underline decoration-slate-600 hover:decoration-amber-300 transition-colors"
+                  className="hover:text-violet-300 underline decoration-slate-600 hover:decoration-violet-300 transition-colors"
                 >
                   Kisan Subsidies
                 </button>
@@ -241,7 +241,7 @@ export const HomePage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => navigate('/assistant')}
-                  className="inline-flex items-center gap-1 text-emerald-400 hover:text-emerald-300 font-semibold"
+                  className="inline-flex items-center gap-1 text-violet-400 hover:text-violet-300 font-semibold"
                 >
                   <Bot className="w-3.5 h-3.5" /> Ask AI Guide
                 </button>
@@ -253,12 +253,12 @@ export const HomePage: React.FC = () => {
               {isAuthenticated ? (
                 <>
                   <Link to="/dashboard">
-                    <Button variant="primary" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-2.5">
+                    <Button variant="primary" className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold px-6 py-2.5 shadow-lg shadow-indigo-600/25">
                       Go to My Dashboard <ArrowRight className="w-4 h-4 ml-1.5" />
                     </Button>
                   </Link>
                   <Link to="/recommendations">
-                    <Button variant="outline" className="border-slate-500 text-white hover:bg-slate-800/60 px-5 py-2.5">
+                    <Button variant="primary" className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold px-6 py-2.5 shadow-lg shadow-indigo-600/25">
                       View My Matched Schemes
                     </Button>
                   </Link>
@@ -266,12 +266,12 @@ export const HomePage: React.FC = () => {
               ) : (
                 <>
                   <Link to="/register">
-                    <Button variant="primary" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-2.5 shadow-lg">
+                    <Button variant="primary" className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold px-6 py-2.5 shadow-lg shadow-indigo-600/25">
                       Check My Eligibility <ArrowRight className="w-4 h-4 ml-1.5" />
                     </Button>
                   </Link>
                   <Link to="/schemes">
-                    <Button variant="outline" className="border-slate-500 text-white hover:bg-slate-800/60 px-5 py-2.5">
+                    <Button variant="primary" className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold px-6 py-2.5 shadow-lg shadow-indigo-600/25">
                       Browse All Schemes
                     </Button>
                   </Link>
@@ -678,15 +678,15 @@ export const HomePage: React.FC = () => {
             <Link to="/register">
               <Button
                 variant="primary"
-                className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-7 py-3 text-sm shadow-md"
+                className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-7 py-3 text-sm shadow-md transition-all"
               >
                 Register Citizen Profile <ArrowRight className="w-4 h-4 ml-1.5" />
               </Button>
             </Link>
             <Link to="/schemes">
               <Button
-                variant="outline"
-                className="border-slate-400 text-white hover:bg-white/10 px-6 py-3 text-sm"
+                variant="primary"
+                className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-7 py-3 text-sm shadow-md transition-all"
               >
                 Search Scheme Catalog
               </Button>

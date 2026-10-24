@@ -98,7 +98,7 @@ export const Header: React.FC = () => {
       {/* Top Government banner strip */}
       <div className="bg-gov-900 text-white text-[11px] py-1 px-4 sm:px-6 lg:px-8 flex items-center justify-between border-b border-gov-800">
         <div className="flex items-center gap-2 truncate">
-          <ShieldCheck className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+          <ShieldCheck className="w-3.5 h-3.5 text-violet-300 shrink-0" />
           <span className="font-medium tracking-wide truncate">
             Public Benefit Discovery Platform &bull; Official Information &amp; Decision Support System
           </span>
@@ -106,7 +106,7 @@ export const Header: React.FC = () => {
         <div className="hidden sm:flex items-center gap-3 text-slate-300 text-[11px] shrink-0 pl-2">
           <span>Screen Reader Friendly</span>
           <span className="text-slate-600">|</span>
-          <span className="text-amber-400 font-semibold">Standard v1.0</span>
+          <span className="text-violet-300 font-semibold">Standard v1.0</span>
         </div>
       </div>
 
@@ -119,7 +119,7 @@ export const Header: React.FC = () => {
             className="flex items-center gap-2.5 group focus:outline-none focus:ring-2 focus:ring-gov-700 rounded-lg p-1 shrink-0"
             title="Smart Scheme & Scholarship Portal"
           >
-            <div className="w-10 h-10 rounded-lg bg-gov-900 text-amber-400 flex items-center justify-center shadow-sm group-hover:bg-gov-800 transition-colors shrink-0">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-600 to-violet-700 text-white flex items-center justify-center shadow-md shadow-indigo-500/20 group-hover:from-indigo-500 group-hover:to-violet-600 transition-all shrink-0">
               <Landmark className="w-5 h-5" />
             </div>
             <div className="flex flex-col">
@@ -239,7 +239,7 @@ export const Header: React.FC = () => {
                         to="/assistant"
                         className="flex items-center gap-2.5 px-3.5 py-2 text-sm text-slate-700 hover:bg-gov-50 hover:text-gov-900 transition-colors"
                       >
-                        <Sparkles className="w-4 h-4 text-amber-500" />
+                        <Sparkles className="w-4 h-4 text-violet-500" />
                         <span>AI Assistant</span>
                       </Link>
                       <Link
@@ -327,7 +327,7 @@ export const Header: React.FC = () => {
                     aria-haspopup="true"
                     aria-label="User Account Menu"
                   >
-                    <div className="w-6 h-6 rounded-full bg-gov-900 text-amber-400 font-bold flex items-center justify-center text-xs shadow-inner">
+                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-600 to-violet-700 text-white font-bold flex items-center justify-center text-xs shadow-sm">
                       {userInitial}
                     </div>
                     <span className="max-w-[120px] xl:max-w-[150px] truncate font-semibold text-slate-800">
@@ -345,7 +345,7 @@ export const Header: React.FC = () => {
                     <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-slate-200/90 py-2 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
                       {/* Account header preview */}
                       <div className="px-4 py-2 border-b border-slate-100 flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-gov-900 text-amber-400 font-bold flex items-center justify-center text-sm shrink-0">
+                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-600 to-violet-700 text-white font-bold flex items-center justify-center text-sm shrink-0 shadow-sm">
                           {userInitial}
                         </div>
                         <div className="flex flex-col min-w-0">
@@ -392,7 +392,7 @@ export const Header: React.FC = () => {
                           to="/assistant"
                           className="flex items-center gap-2.5 px-4 py-2 text-sm text-slate-700 hover:bg-gov-50 hover:text-gov-900 transition-colors"
                         >
-                          <Sparkles className="w-4 h-4 text-amber-500" />
+                          <Sparkles className="w-4 h-4 text-violet-500" />
                           <span>AI Assistant</span>
                         </Link>
                       </div>
@@ -453,7 +453,7 @@ export const Header: React.FC = () => {
             {isAuthenticated && user && (
               <div className="p-3 bg-gov-50/80 rounded-xl border border-gov-100 flex items-center justify-between">
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="w-9 h-9 rounded-full bg-gov-900 text-amber-400 font-bold flex items-center justify-center text-sm shrink-0">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-600 to-violet-700 text-white font-bold flex items-center justify-center text-sm shrink-0 shadow-sm">
                     {userInitial}
                   </div>
                   <div className="min-w-0">
@@ -582,7 +582,7 @@ export const Header: React.FC = () => {
                         : 'text-slate-700 hover:bg-slate-50'
                     }`}
                   >
-                    <Sparkles className="w-4 h-4 text-amber-500" />
+                    <Sparkles className="w-4 h-4 text-violet-500" />
                     <span>AI Guidance Assistant</span>
                   </Link>
                   <Link

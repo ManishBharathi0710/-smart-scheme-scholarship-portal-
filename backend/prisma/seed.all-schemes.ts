@@ -147,6 +147,23 @@ async function seedAllOfficialSchemes(): Promise<void> {
       });
     }
 
+    // Ensure SchemeVersion (v1) exists
+    await prisma.schemeVersion.upsert({
+      where: {
+        schemeId_versionNumber: {
+          schemeId: s.id,
+          versionNumber: 1,
+        },
+      },
+      update: {},
+      create: {
+        schemeId: s.id,
+        versionNumber: 1,
+        changeSummary: 'Initial official scheme seed',
+        snapshot: s as unknown as Prisma.InputJsonValue,
+      },
+    });
+
     if (count % 10 === 0 || count === allSchemes.length) {
       console.log(`   ✓ Seeded ${count}/${allSchemes.length} schemes... (${s.name.substring(0, 45)})`);
     }

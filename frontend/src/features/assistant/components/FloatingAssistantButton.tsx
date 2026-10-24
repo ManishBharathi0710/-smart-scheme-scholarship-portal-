@@ -33,14 +33,14 @@ export const FloatingAssistantButton: React.FC = () => {
         <button
           type="button"
           onClick={() => setIsOpen(true)}
-          className="group flex items-center gap-2.5 bg-gov-800 hover:bg-gov-900 text-white px-4 py-3.5 rounded-full shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-0.5 border border-gov-700 focus:outline-none focus:ring-4 focus:ring-gov-400"
+          className="group flex items-center gap-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white px-4 py-3.5 rounded-full shadow-xl shadow-indigo-600/30 hover:shadow-2xl hover:shadow-indigo-600/40 transition-all duration-300 transform hover:-translate-y-0.5 border border-indigo-400/30 focus:outline-none focus:ring-4 focus:ring-violet-400"
           aria-label="Open AI Scheme Assistant"
         >
           <div className="relative">
-            <Sparkles className="w-5 h-5 text-amber-400 group-hover:rotate-12 transition-transform duration-300" />
+            <Sparkles className="w-5 h-5 text-violet-200 group-hover:rotate-12 transition-transform duration-300" />
             <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500" />
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-300 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white" />
             </span>
           </div>
           <span className="font-semibold text-sm tracking-wide">

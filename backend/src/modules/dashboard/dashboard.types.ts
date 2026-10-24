@@ -38,7 +38,9 @@ export interface DashboardAggregateDto {
   topRecommendations: RecommendationCardDto[];
   closingSoon: RecommendationCardDto[];
   savedSchemes: {
+    total?: number;
     totalCount: number;
+    preview?: SavedSchemeCardDto[];
     items: SavedSchemeCardDto[];
   };
   actionItems: DashboardActionItem[];

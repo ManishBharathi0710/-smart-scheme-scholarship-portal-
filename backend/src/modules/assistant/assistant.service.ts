@@ -63,6 +63,7 @@ export class AssistantService {
       userId,
       intent,
       request.context,
+      request.message,
     );
 
     // 3. Load recent conversation history (bounded by env.AI_MAX_CONVERSATION_MESSAGES)

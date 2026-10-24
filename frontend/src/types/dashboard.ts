@@ -39,7 +39,9 @@ export interface DashboardData {
   closingSoon: RecommendationCard[];
   savedSchemes: {
     total: number;
+    totalCount?: number;
     preview: SavedSchemeCard[];
+    items?: SavedSchemeCard[];
   };
   actionItems: DashboardActionItem[];
   generatedAt: string;

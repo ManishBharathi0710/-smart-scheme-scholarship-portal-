@@ -552,7 +552,7 @@ export class SchemesRepository extends BaseRepository {
    * Pure deterministic scheme and rule data
    */
   public async getPublishedSchemesForRecommendation() {
-    return this.defaultDb.scheme.findMany({
+    const schemes = await this.defaultDb.scheme.findMany({
       where: {
         isPublished: true,
         status: { in: [SchemeStatus.PUBLISHED, SchemeStatus.ACTIVE] },
@@ -572,6 +572,22 @@ export class SchemesRepository extends BaseRepository {
         },
       },
     });
+
+    for (const s of schemes) {
+      if (s.versions.length === 0) {
+        const v = await this.defaultDb.schemeVersion.create({
+          data: {
+            schemeId: s.id,
+            versionNumber: s.currentVersion || 1,
+            changeSummary: 'Auto-created initial version',
+            snapshot: s as unknown as Prisma.InputJsonValue,
+          },
+        });
+        s.versions.push(v);
+      }
+    }
+
+    return schemes;
   }
 }
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DashboardPage } from './DashboardPage';
@@ -135,6 +135,103 @@ describe('DashboardPage Component', () => {
       expect(screen.getByText('Higher Education Fee Waiver')).toBeInTheDocument();
       // Action items
       expect(screen.getByText('Complete Occupation Details')).toBeInTheDocument();
+      // Live status indicator
+      expect(screen.getByText(/Live Status: Synced/i)).toBeInTheDocument();
+    });
+  });
+
+  it('renders gracefully without crashing when collections are empty or undefined', async () => {
+    vi.mocked(dashboardApi.getDashboard).mockResolvedValue({
+      profile: {
+        fullName: null,
+        email: null,
+        state: null,
+        educationLevel: null,
+        category: null,
+        income: null,
+        isReadyForRecommendations: false,
+        completionPercentage: 0,
+        summary: 'Complete profile',
+      },
+      recommendationSummary: {
+        totalEvaluated: 0,
+        eligible: 0,
+        likelyEligible: 0,
+        needsVerification: 0,
+        notEligible: 0,
+        expiringSoon: 0,
+      },
+      topRecommendations: [],
+      closingSoon: [],
+      savedSchemes: {
+        total: 0,
+        preview: [],
+      },
+      actionItems: [],
+      generatedAt: '2026-09-26T10:00:00.000Z',
+    });
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <DashboardPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(/Welcome back/i)).toBeInTheDocument();
+      expect(screen.getByText(/No Matching Schemes Found/i)).toBeInTheDocument();
+    });
+  });
+
+  it('allows navigating to Application Tracker and viewing tracked stage stepper', async () => {
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <DashboardPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(/Application Tracker/i)).toBeInTheDocument();
+    });
+
+    const appTabButton = screen.getByRole('button', { name: /Application Tracker/i });
+    fireEvent.click(appTabButton);
+
+    await waitFor(() => {
+      expect(screen.getByText(/Filter By Status:/i)).toBeInTheDocument();
+      expect(screen.getAllByText(/Statutory Processing Timeline:/i).length).toBeGreaterThan(0);
+    });
+  });
+
+  it('opens and closes the Export Citizen Benefit Summary modal', async () => {
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <DashboardPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(/Export Application PDF/i)).toBeInTheDocument();
+    });
+
+    const exportBtn = screen.getByRole('button', { name: /Export Application PDF/i });
+    fireEvent.click(exportBtn);
+
+    await waitFor(() => {
+      expect(screen.getByText(/Citizen Public Benefit Summary Report/i)).toBeInTheDocument();
+    });
+
+    const closeBtn = screen.getByRole('button', { name: /Close/i });
+    fireEvent.click(closeBtn);
+
+    await waitFor(() => {
+      expect(screen.queryByText(/Citizen Public Benefit Summary Report/i)).not.toBeInTheDocument();
     });
   });
 });
