@@ -1,12 +1,18 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import {
-  recommendationsApi,
-} from '../api/recommendations.api';
+import { recommendationsApi } from '../api/recommendations.api';
 import type { RecommendationDetailDto } from '../../../types/recommendation';
 import { RecommendationStatusBadge } from '../components/RecommendationStatusBadge';
 import { MatchExplanation } from '../components/MatchExplanation';
 import { MissingInformationCard } from '../components/MissingInformationCard';
+import {
+  PageContainer,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  Button,
+} from '../../../components/ui';
 import {
   ArrowLeft,
   Calendar,
@@ -16,6 +22,9 @@ import {
   AlertCircle,
   Info,
   CheckCircle2,
+  Building2,
+  ShieldCheck,
+  MapPin,
 } from 'lucide-react';
 
 export const RecommendationDetailPage: React.FC = () => {
@@ -48,6 +57,11 @@ export const RecommendationDetailPage: React.FC = () => {
     fetchDetail();
   }, [fetchDetail]);
 
+  const safeFormatText = (str?: string | null): string => {
+    if (!str || typeof str !== 'string') return '';
+    return str.replace(/_/g, ' ');
+  };
+
   const formatDate = (dateStr?: string | null) => {
     if (!dateStr) return 'Not specified';
     try {
@@ -78,253 +92,389 @@ export const RecommendationDetailPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="container py-8 max-w-4xl" data-testid="recommendation-detail-loading">
+      <PageContainer className="py-8" data-testid="recommendation-detail-loading">
         <div className="animate-pulse space-y-6">
-          <div className="h-6 w-32 bg-slate-200 dark:bg-slate-700 rounded" />
-          <div className="h-10 w-3/4 bg-slate-200 dark:bg-slate-700 rounded" />
-          <div className="h-32 bg-slate-200 dark:bg-slate-700 rounded-lg" />
-          <div className="h-64 bg-slate-200 dark:bg-slate-700 rounded-lg" />
+          <div className="h-6 w-36 bg-slate-200 rounded" />
+          <div className="h-44 bg-slate-200 rounded-xl" />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 space-y-6">
+              <div className="h-48 bg-slate-200 rounded-xl" />
+              <div className="h-64 bg-slate-200 rounded-xl" />
+            </div>
+            <div className="h-80 bg-slate-200 rounded-xl" />
+          </div>
         </div>
-      </div>
+      </PageContainer>
     );
   }
 
   if (error || !recommendation) {
     return (
-      <div className="container py-8 max-w-4xl" data-testid="recommendation-detail-error">
+      <PageContainer className="py-8" data-testid="recommendation-detail-error">
         <Link
           to="/recommendations"
-          className="inline-flex items-center text-sm font-medium text-primary-600 hover:text-primary-700 mb-6"
+          className="inline-flex items-center text-xs font-semibold text-slate-500 hover:text-gov-800 transition-colors mb-6"
         >
-          <ArrowLeft className="mr-1.5 w-4 h-4" /> Back to Recommendations
+          <ArrowLeft className="mr-1.5 w-4 h-4" /> Back to All Recommendations
         </Link>
-        <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 rounded-lg p-6 text-center">
-          <AlertCircle className="w-10 h-10 text-red-500 mx-auto mb-3" />
-          <h2 className="text-lg font-semibold text-red-800 dark:text-red-300">
+        <div className="bg-red-50 border border-red-200 rounded-xl p-8 text-center max-w-xl mx-auto shadow-sm">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
+          <h2 className="text-lg font-bold text-red-800">
             Unable to Load Evaluation
           </h2>
-          <p className="text-sm text-red-600 dark:text-red-400 mt-1 max-w-md mx-auto">
+          <p className="text-sm text-red-600 mt-2">
             {error || 'The requested recommendation could not be found or has expired.'}
           </p>
-          <div className="mt-4">
-            <Link
-              to="/recommendations"
-              className="btn btn-outline text-sm"
-            >
-              Return to Catalog
+          <div className="mt-6">
+            <Link to="/recommendations">
+              <Button variant="outline" size="sm">
+                Return to Recommendations
+              </Button>
             </Link>
           </div>
         </div>
-      </div>
+      </PageContainer>
     );
   }
 
+  const officialPortalUrl =
+    recommendation.scheme?.officialPortalUrl ||
+    recommendation.scheme?.officialApplicationUrl ||
+    recommendation.scheme?.officialSourceUrl ||
+    null;
+
+  const missingInfoList =
+    recommendation.missingInformation ||
+    recommendation.evaluationDetails?.missingInformation ||
+    [];
+
+  const benefitsList = recommendation.scheme?.benefits || [];
+  const documentsList =
+    recommendation.scheme?.requiredDocuments ||
+    recommendation.scheme?.documents ||
+    [];
+
+  const programTypeFormatted =
+    safeFormatText(recommendation.scheme?.programType || recommendation.programType) || 'SCHEME';
+  const departmentName =
+    recommendation.scheme?.department ||
+    recommendation.departmentName ||
+    'Government Department';
+
+  const schemeName = recommendation.scheme?.name || recommendation.schemeName;
+  const assessmentSummary =
+    recommendation.explanation?.summary ||
+    recommendation.evaluationDetails?.summary ||
+    recommendation.summary ||
+    'Statutory evaluation completed against registered citizen profile.';
+
+  const openDate =
+    recommendation.scheme?.applicationPeriod?.applicationOpenDate ||
+    recommendation.scheme?.applicationPeriods?.[0]?.openDate;
+  const closeDate =
+    recommendation.scheme?.applicationPeriod?.applicationCloseDate ||
+    recommendation.scheme?.applicationPeriods?.[0]?.closeDate ||
+    recommendation.deadline;
+
   return (
-    <div className="container py-8 max-w-4xl space-y-6" data-testid="recommendation-detail-page">
+    <PageContainer className="py-8 space-y-6" data-testid="recommendation-detail-page">
       {/* Breadcrumb Navigation */}
       <div>
         <Link
           to="/recommendations"
-          className="inline-flex items-center text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-gov-800 transition-colors"
         >
-          <ArrowLeft className="mr-1.5 w-4 h-4" /> Back to All Recommendations
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>Back to All Recommendations</span>
         </Link>
       </div>
 
-      {/* Header & Status Card */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm">
-        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-          <div className="space-y-2">
+      {/* Header & Status Hero Card */}
+      <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm">
+        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
+          <div className="space-y-3 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400">
-                {recommendation.scheme.programType.replace(/_/g, ' ')}
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-gov-100 text-gov-800">
+                {programTypeFormatted}
               </span>
-              <span className="text-slate-300 dark:text-slate-700">•</span>
-              <span className="text-xs text-slate-500 dark:text-slate-400">
-                {recommendation.scheme.department}
+              <span className="text-slate-300">•</span>
+              <span className="inline-flex items-center gap-1 text-xs text-slate-600 font-medium">
+                <Building2 className="w-3.5 h-3.5 text-gov-600" />
+                {departmentName}
               </span>
+              {recommendation.scheme?.stateScope && (
+                <>
+                  <span className="text-slate-300">•</span>
+                  <span className="inline-flex items-center gap-1 text-xs text-slate-500 font-medium">
+                    <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                    {recommendation.scheme.stateScope}
+                  </span>
+                </>
+              )}
             </div>
 
-            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">
-              {recommendation.scheme.name}
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 leading-tight">
+              {schemeName}
             </h1>
 
-            <div className="flex flex-wrap items-center gap-3 pt-2">
+            <div className="flex flex-wrap items-center gap-3 pt-1">
               <RecommendationStatusBadge
                 eligibilityStatus={recommendation.eligibilityStatus}
                 applicationStatus={recommendation.applicationStatus}
                 isExpiringSoon={recommendation.isExpiringSoon}
                 daysUntilDeadline={recommendation.daysUntilDeadline}
               />
-              <span className="text-xs text-slate-500 dark:text-slate-400">
-                Evaluated: {formatEvaluatedAt(recommendation.evaluatedAt)} (Version {recommendation.schemeVersion.versionNumber})
+              <span className="text-xs text-slate-500">
+                Evaluated: {formatEvaluatedAt(recommendation.evaluatedAt)} &bull; Rule Spec v
+                {recommendation.schemeVersion?.versionNumber ||
+                  recommendation.schemeVersionNumber ||
+                  1}
               </span>
             </div>
           </div>
 
-          {/* Quick Apply Button */}
-          {recommendation.scheme.officialPortalUrl && (
-            <div className="shrink-0 pt-2 md:pt-0">
-              <button
-                type="button"
+          {/* Quick Apply Button on top right */}
+          {officialPortalUrl && (
+            <div className="shrink-0 pt-1">
+              <Button
+                variant="primary"
                 onClick={() => setShowExitModal(true)}
-                className="btn btn-primary inline-flex items-center gap-2 shadow-sm w-full md:w-auto justify-center"
+                className="inline-flex items-center gap-2 px-5 py-2.5 shadow-sm text-sm font-semibold rounded-lg bg-gov-900 hover:bg-gov-800 text-white"
                 data-testid="apply-official-portal-btn"
               >
                 <span>Apply on Official Portal</span>
                 <ExternalLink className="w-4 h-4" />
-              </button>
+              </Button>
             </div>
           )}
         </div>
 
         {/* Short Executive Summary */}
-        <div className="mt-5 p-4 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 text-sm text-slate-700 dark:text-slate-300">
-          <span className="font-semibold text-slate-900 dark:text-white">Evaluation Assessment: </span>
-          {recommendation.explanation.summary}
+        <div className="mt-6 p-4 rounded-xl bg-gov-50/80 border border-gov-100 text-sm text-slate-700">
+          <span className="font-bold text-gov-950">
+            Evaluation Assessment:{' '}
+          </span>
+          {assessmentSummary}
         </div>
       </div>
 
-      {/* Missing Information CTA (if any) */}
-      {recommendation.missingInformation.length > 0 && (
-        <MissingInformationCard missingInformation={recommendation.missingInformation} />
-      )}
+      {/* 2-Column Responsive Grid: Main Content (2/3) + Sticky Sidebar (1/3) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        {/* Left Column: Requirements, Explanations, Benefits, Documents */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Missing Information CTA (if any) */}
+          {missingInfoList.length > 0 && (
+            <MissingInformationCard missingInformation={missingInfoList} />
+          )}
 
-      {/* Deterministic Match Explanation */}
-      <MatchExplanation explanation={recommendation.explanation} />
+          {/* Deterministic Match Explanation */}
+          <MatchExplanation
+            explanation={recommendation.explanation || recommendation.evaluationDetails}
+          />
 
-      {/* Scheme Benefits Breakdown */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm space-y-4">
-        <div className="flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
-          <Award className="w-5 h-5 text-primary-500" />
-          <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-            Program Benefits & Financial Support
-          </h2>
-        </div>
-
-        {recommendation.scheme.benefits.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {recommendation.scheme.benefits.map((benefit, idx) => (
-              <div
-                key={idx}
-                className="p-4 rounded-lg bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs uppercase font-bold text-primary-600 dark:text-primary-400">
-                    {benefit.type}
-                  </span>
-                  {benefit.coverage && (
-                    <span className="text-xs text-slate-500 dark:text-slate-400">
-                      Coverage: {benefit.coverage}
-                    </span>
-                  )}
-                </div>
-                {benefit.amount ? (
-                  <div className="text-lg font-bold text-slate-900 dark:text-white mt-1">
-                    ₹{benefit.amount.toLocaleString('en-IN')}{' '}
-                    <span className="text-xs font-normal text-slate-500">
-                      {benefit.frequency ? `(${benefit.frequency})` : ''}
-                    </span>
-                  </div>
-                ) : null}
-                <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">
-                  {benefit.description}
+          {/* Scheme Benefits Breakdown */}
+          <Card className="border border-slate-200 shadow-sm bg-white">
+            <CardHeader className="pb-3 border-b border-slate-100 flex flex-row items-center gap-2.5">
+              <div className="p-1.5 rounded-lg bg-gov-50 text-gov-700">
+                <Award className="w-5 h-5" />
+              </div>
+              <div>
+                <CardTitle className="text-base font-bold text-slate-900">
+                  Program Benefits & Financial Support
+                </CardTitle>
+                <p className="text-xs text-slate-500">
+                  Approved financial assistance and subsidies provided under this scheme
                 </p>
               </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-slate-500 italic">No detailed benefit items specified.</p>
-        )}
-      </div>
+            </CardHeader>
+            <CardContent className="pt-5">
+              {benefitsList.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {benefitsList.map((benefit, idx) => (
+                    <div
+                      key={idx}
+                      className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col justify-between"
+                    >
+                      <div>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs uppercase font-extrabold text-gov-700 tracking-wide">
+                            {safeFormatText(benefit?.type) || benefit?.type || 'BENEFIT'}
+                          </span>
+                          {benefit?.coverage && (
+                            <span className="text-xs text-slate-500 font-medium">
+                              Coverage: {benefit.coverage}
+                            </span>
+                          )}
+                        </div>
+                        {benefit?.amount ? (
+                          <div className="text-xl font-extrabold text-slate-900 mt-1.5">
+                            ₹{benefit.amount.toLocaleString('en-IN')}{' '}
+                            <span className="text-xs font-normal text-slate-500">
+                              {benefit?.frequency
+                                ? `(${safeFormatText(benefit.frequency) || benefit.frequency})`
+                                : ''}
+                            </span>
+                          </div>
+                        ) : null}
+                        <p className="text-xs text-slate-600 mt-2 leading-relaxed">
+                          {benefit?.description}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-slate-500 italic">
+                  No detailed benefit items specified in gazetted rules.
+                </p>
+              )}
+            </CardContent>
+          </Card>
 
-      {/* Required Documents */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm space-y-4">
-        <div className="flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
-          <FileText className="w-5 h-5 text-primary-500" />
-          <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-            Required Documents for Verification
-          </h2>
+          {/* Required Documents */}
+          <Card className="border border-slate-200 shadow-sm bg-white">
+            <CardHeader className="pb-3 border-b border-slate-100 flex flex-row items-center gap-2.5">
+              <div className="p-1.5 rounded-lg bg-blue-50 text-blue-600">
+                <FileText className="w-5 h-5" />
+              </div>
+              <div>
+                <CardTitle className="text-base font-bold text-slate-900">
+                  Required Documents for Verification
+                </CardTitle>
+                <p className="text-xs text-slate-500">
+                  Documents required by administrative authorities during application processing
+                </p>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-4">
+              {documentsList.length > 0 ? (
+                <div className="divide-y divide-slate-100">
+                  {documentsList.map((doc, idx) => (
+                    <div key={idx} className="py-3 flex items-start gap-3">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" />
+                      <div className="text-sm flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-slate-900">
+                            {doc.name}
+                          </span>
+                          {doc.mandatory && (
+                            <span className="text-[10px] font-bold text-red-700 bg-red-50 px-2 py-0.5 rounded-full border border-red-200/60">
+                              Mandatory
+                            </span>
+                          )}
+                        </div>
+                        {doc.description && (
+                          <p className="text-xs text-slate-500 mt-1">
+                            {doc.description}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-slate-500 italic">
+                  No specific documents listed. General citizen identification documents apply.
+                </p>
+              )}
+            </CardContent>
+          </Card>
         </div>
 
-        {recommendation.scheme.requiredDocuments.length > 0 ? (
-          <div className="divide-y divide-slate-100 dark:divide-slate-800">
-            {recommendation.scheme.requiredDocuments.map((doc, idx) => (
-              <div key={idx} className="py-3 flex items-start gap-3">
-                <CheckCircle2 className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
-                <div className="text-sm">
-                  <span className="font-semibold text-slate-900 dark:text-slate-100">
-                    {doc.name}
+        {/* Right Column: Sticky Sidebar with Application Details & Disclaimers */}
+        <div className="lg:col-span-1 space-y-6 lg:sticky lg:top-20">
+          {/* Application Window & Channels Card */}
+          <Card className="border border-slate-200 shadow-sm bg-white">
+            <CardHeader className="pb-3 border-b border-slate-100 flex flex-row items-center gap-2">
+              <Calendar className="w-4 h-4 text-gov-700" />
+              <CardTitle className="text-sm font-bold text-slate-900">
+                Application Schedule
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-4 space-y-4">
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                <div className="p-3 rounded-lg bg-slate-50 border border-slate-200">
+                  <span className="text-[11px] text-slate-500 block font-medium">
+                    Opening Date
                   </span>
-                  {doc.mandatory && (
-                    <span className="ml-2 text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 px-1.5 py-0.5 rounded">
-                      Mandatory
-                    </span>
-                  )}
-                  {doc.description && (
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                      {doc.description}
-                    </p>
-                  )}
+                  <span className="font-bold text-slate-900 mt-1 block">
+                    {formatDate(openDate)}
+                  </span>
+                </div>
+                <div className="p-3 rounded-lg bg-slate-50 border border-slate-200">
+                  <span className="text-[11px] text-slate-500 block font-medium">
+                    Closing Date
+                  </span>
+                  <span className="font-bold text-slate-900 mt-1 block">
+                    {formatDate(closeDate)}
+                  </span>
                 </div>
               </div>
-            ))}
+
+              {officialPortalUrl && (
+                <div className="pt-2">
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    onClick={() => setShowExitModal(true)}
+                    className="w-full py-2.5 text-sm font-bold shadow-sm inline-flex items-center justify-center gap-2 rounded-lg bg-gov-900 hover:bg-gov-800 text-white"
+                    data-testid="bottom-apply-portal-btn"
+                  >
+                    <span>Proceed to Official Portal</span>
+                    <ExternalLink className="w-4 h-4" />
+                  </Button>
+                  <p className="text-[11px] text-slate-500 text-center mt-2">
+                    Applications are received only through official portals.
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Department & Integrity Summary Card */}
+          <Card className="border border-slate-200 shadow-sm bg-white">
+            <CardHeader className="pb-3 border-b border-slate-100 flex flex-row items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+              <CardTitle className="text-sm font-bold text-slate-900">
+                Statutory Verification
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-4 space-y-3 text-xs">
+              <div className="flex justify-between py-1 border-b border-slate-100">
+                <span className="text-slate-500">Ministry / Dept:</span>
+                <span className="font-semibold text-slate-900 text-right max-w-[60%]">
+                  {departmentName}
+                </span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-slate-100">
+                <span className="text-slate-500">Program Category:</span>
+                <span className="font-semibold text-slate-900">
+                  {programTypeFormatted}
+                </span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-slate-100">
+                <span className="text-slate-500">Evaluation Logic:</span>
+                <span className="font-mono text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded">
+                  Deterministic Engine
+                </span>
+              </div>
+              <div className="flex justify-between py-1">
+                <span className="text-slate-500">Rule Version:</span>
+                <span className="font-semibold text-slate-900">
+                  v{recommendation.schemeVersion?.versionNumber || recommendation.schemeVersionNumber || 1}
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Mandatory Regulatory Disclaimer */}
+          <div className="bg-blue-50/80 border border-blue-200 rounded-xl p-4 text-xs text-blue-900 leading-relaxed flex items-start gap-3">
+            <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+            <div>
+              <span className="font-bold block mb-1 text-blue-950">Official Decision-Support Notice</span>
+              Eligibility shown here is calculated deterministically against gazetted statutory rules and your citizen profile facts. Final selection, approval, and disbursement are executed solely by concerned authorities.
+            </div>
           </div>
-        ) : (
-          <p className="text-sm text-slate-500 italic">No specific documents specified at this time.</p>
-        )}
-      </div>
-
-      {/* Application Period & Official Sources */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm space-y-4">
-        <div className="flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
-          <Calendar className="w-5 h-5 text-primary-500" />
-          <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-            Application Window & Official Channels
-          </h2>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-          <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800">
-            <span className="text-xs text-slate-500 dark:text-slate-400 block font-medium">
-              Opening Date
-            </span>
-            <span className="font-semibold text-slate-900 dark:text-white mt-1 block">
-              {formatDate(recommendation.scheme.applicationPeriod?.applicationOpenDate)}
-            </span>
-          </div>
-
-          <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800">
-            <span className="text-xs text-slate-500 dark:text-slate-400 block font-medium">
-              Closing Date
-            </span>
-            <span className="font-semibold text-slate-900 dark:text-white mt-1 block">
-              {formatDate(recommendation.scheme.applicationPeriod?.applicationCloseDate)}
-            </span>
-          </div>
-        </div>
-
-        {recommendation.scheme.officialPortalUrl && (
-          <div className="pt-2">
-            <button
-              type="button"
-              onClick={() => setShowExitModal(true)}
-              className="btn btn-outline inline-flex items-center gap-2 text-sm"
-              data-testid="bottom-apply-portal-btn"
-            >
-              <span>Visit Official Government Portal</span>
-              <ExternalLink className="w-4 h-4" />
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Mandatory Regulatory Disclaimer */}
-      <div className="bg-blue-50/60 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/60 rounded-xl p-5 text-xs text-blue-800 dark:text-blue-300 leading-relaxed flex items-start gap-3">
-        <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
-        <div>
-          <span className="font-bold block mb-1">Official Decision-Support Notice</span>
-          Eligibility shown here is based on the information provided in your profile and the structured scheme rules currently stored in the portal. Final eligibility, verification, approval, and benefit disbursement are solely determined by the concerned government authority. Please verify all application guidelines on the official portal before applying.
         </div>
       </div>
 
@@ -336,54 +486,55 @@ export const RecommendationDetailPage: React.FC = () => {
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
           data-testid="exit-portal-modal"
         >
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl max-w-md w-full p-6 shadow-xl space-y-4">
+          <div className="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400">
+              <div className="p-2.5 rounded-full bg-blue-100 text-blue-600">
                 <ExternalLink className="w-5 h-5" />
               </div>
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-                Leaving to Official Portal
+              <h3 className="text-lg font-bold text-slate-900">
+                Leaving to Official Government Portal
               </h3>
             </div>
 
-            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+            <p className="text-sm text-slate-600 leading-relaxed">
               You are being directed to the official government portal:
               <br />
-              <span className="font-mono text-xs text-primary-600 dark:text-primary-400 break-all block mt-1">
-                {recommendation.scheme.officialPortalUrl}
+              <span className="font-mono text-xs text-gov-700 break-all block mt-1.5 p-2 bg-slate-50 rounded-md border border-slate-200">
+                {officialPortalUrl}
               </span>
             </p>
 
-            <div className="text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 p-3 rounded-lg">
+            <div className="text-xs text-slate-500 bg-slate-50 p-3 rounded-lg border border-slate-100">
               This platform provides decision support and eligibility screening. We do not accept applications, charge fees, or guarantee scheme approval.
             </div>
 
             <div className="flex items-center justify-end gap-3 pt-2">
-              <button
-                type="button"
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => setShowExitModal(false)}
-                className="btn btn-outline text-sm"
               >
                 Cancel
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
                 onClick={() => {
                   setShowExitModal(false);
-                  if (recommendation.scheme.officialPortalUrl) {
-                    window.open(recommendation.scheme.officialPortalUrl, '_blank', 'noopener,noreferrer');
+                  if (officialPortalUrl) {
+                    window.open(officialPortalUrl, '_blank', 'noopener,noreferrer');
                   }
                 }}
-                className="btn btn-primary text-sm inline-flex items-center gap-1.5"
+                className="inline-flex items-center gap-1.5 bg-gov-900 hover:bg-gov-800 text-white"
                 data-testid="confirm-external-link-btn"
               >
                 <span>Proceed to Official Portal</span>
                 <ExternalLink className="w-3.5 h-3.5" />
-              </button>
+              </Button>
             </div>
           </div>
         </div>
       )}
-    </div>
+    </PageContainer>
   );
 };
