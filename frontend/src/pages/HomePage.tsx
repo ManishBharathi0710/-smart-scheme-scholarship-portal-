@@ -15,14 +15,13 @@ import {
   Building2,
   Sparkles,
   FileCheck,
-  Activity,
   Cpu,
   HelpCircle,
   IndianRupee,
   Bot,
+  ChevronDown,
 } from 'lucide-react';
 import { schemesApi } from '../features/schemes/api/schemes.api';
-import { healthService } from '../services/health.service';
 import { useAuth } from '../features/auth/context/AuthContext';
 import { PageContainer, Badge, Card, CardContent, Button, Spinner } from '../components/ui';
 
@@ -31,19 +30,13 @@ export const HomePage: React.FC = () => {
   const { isAuthenticated } = useAuth();
   const [searchKeyword, setSearchKeyword] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   // 1. Fetch live published schemes for Spotlight
   const { data: schemesData, isLoading: schemesLoading } = useQuery({
     queryKey: ['home-featured-schemes'],
     queryFn: () => schemesApi.getPublishedSchemes({ page: 1, pageSize: 3, sortBy: 'updatedAt', sortOrder: 'desc' }),
     staleTime: 60000,
-  });
-
-  // 2. Fetch live system health
-  const { data: health, isLoading: healthLoading } = useQuery({
-    queryKey: ['system-health'],
-    queryFn: () => healthService.getHealth(),
-    refetchInterval: 30000,
   });
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -119,17 +112,27 @@ export const HomePage: React.FC = () => {
     },
   ];
 
-  const modules = [
-    { id: 1, name: 'Foundation & Auth' },
-    { id: 2, name: 'Citizen Profile' },
-    { id: 3, name: 'Scheme Catalog' },
-    { id: 4, name: 'Rule Engine' },
-    { id: 5, name: 'Discovery & Compare' },
-    { id: 6, name: 'Documents & OCR' },
-    { id: 7, name: 'Deadline Alerts' },
-    { id: 8, name: 'Grounded AI' },
-    { id: 9, name: 'Analytics & Audit' },
-    { id: 10, name: 'Production & Scale' },
+  const faqs = [
+    {
+      q: 'How does the portal evaluate my scholarship and scheme eligibility?',
+      a: 'The portal uses a deterministic statutory rule engine that evaluates your registered profile criteria (such as state of residence, family income, education level, gender, and social category) against gazetted government criteria. Every recommendation displays an exact breakdown of satisfied conditions and required documents.',
+    },
+    {
+      q: 'Does this platform charge any fees or take a commission from awards?',
+      a: 'No. This is a 100% free citizen decision-support platform operated under public interest guidelines. We do not charge application fees, we do not employ middlemen, and we route you directly to official government ministry websites for application submission.',
+    },
+    {
+      q: 'What common documents should I keep ready for verification?',
+      a: 'Most government schemes require a standard set of verified documents: proof of identity (Aadhaar/Voter ID), recent income certificate issued by a competent revenue authority, domicile/residence certificate, academic marksheets, category/caste certificate (if applicable), and active bank account passbook.',
+    },
+    {
+      q: 'Can I apply for multiple scholarships and welfare schemes simultaneously?',
+      a: 'Yes, citizens can explore and match with multiple schemes. However, certain state or central rules may restrict claiming two overlapping financial stipends for the same academic year. The portal’s compare tool helps you evaluate and select the highest-benefit scheme.',
+    },
+    {
+      q: 'How does the Guarded AI Assistant help me?',
+      a: 'Our grounded AI Assistant answers questions about scheme rules, explains complex legal clauses in plain language, and helps identify missing profile documents. Crucially, the AI is constrained by strict statutory guardrails so it never hallucinates fake deadlines or eligibility.',
+    },
   ];
 
   return (
@@ -592,74 +595,52 @@ export const HomePage: React.FC = () => {
         </div>
 
         {/* =========================================================================
-            PLATFORM ARCHITECTURE & HEALTH (COMPACT & VERIFIED)
+            CITIZEN FREQUENTLY ASKED QUESTIONS (FAQ)
             ========================================================================= */}
-        <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
-            <div>
-              <div className="flex items-center gap-2">
-                <Activity className="w-4 h-4 text-emerald-600" />
-                <h3 className="text-sm font-bold text-slate-900">
-                  Platform Architecture &amp; System Telemetry
-                </h3>
-                <Badge variant="success" className="text-[10px] font-bold px-2 py-0.5">
-                  All 10 Modules Verified
-                </Badge>
-              </div>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Full-stack integration verified across React Frontend, REST API, PostgreSQL, and Recommendation Services.
-              </p>
+        <div className="space-y-6">
+          <div className="text-center max-w-2xl mx-auto space-y-2">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold text-gov-700 uppercase tracking-wider">
+              <HelpCircle className="w-3.5 h-3.5 text-gov-600" />
+              <span>Got Questions?</span>
             </div>
-
-            <div className="flex items-center gap-3 text-xs text-slate-600">
-              {healthLoading ? (
-                <Spinner size="sm" label="Checking status..." />
-              ) : health?.status === 'healthy' ? (
-                <span className="inline-flex items-center gap-1.5 text-emerald-700 font-semibold bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                  Systems Operational
-                </span>
-              ) : (
-                <span className="text-amber-700 font-semibold bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200">
-                  Degraded Mode
-                </span>
-              )}
-            </div>
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+              Frequently Asked Questions
+            </h2>
+            <p className="text-sm text-slate-500">
+              Clear answers on deterministic eligibility, required statutory documents, and zero-fee applications.
+            </p>
           </div>
 
-          {/* Compact 10-module pill overview */}
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-1">
-            {modules.map((m) => (
-              <div
-                key={m.id}
-                className="px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-700 text-xs flex items-center justify-between"
-              >
-                <span className="font-semibold truncate">{m.id}. {m.name}</span>
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0 ml-1" />
-              </div>
-            ))}
-          </div>
-
-          {/* Database & Runtime stats */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 text-xs text-slate-600 border-t border-slate-100">
-            <div>
-              <span className="text-slate-400">Database: </span>
-              <span className="font-semibold text-slate-800">
-                {health?.database?.status === 'connected' ? 'PostgreSQL Active (1ms)' : 'Online'}
-              </span>
-            </div>
-            <div>
-              <span className="text-slate-400">Environment: </span>
-              <span className="font-semibold text-slate-800 capitalize">{health?.environment || 'Development'}</span>
-            </div>
-            <div>
-              <span className="text-slate-400">API Gateway: </span>
-              <span className="font-semibold text-slate-800">/api/v1 (Express v4)</span>
-            </div>
-            <div>
-              <span className="text-slate-400">Compliance: </span>
-              <span className="font-semibold text-slate-800">ISO / GIGW Standard</span>
-            </div>
+          <div className="max-w-4xl mx-auto space-y-3">
+            {faqs.map((faq, index) => {
+              const isOpen = openFaq === index;
+              return (
+                <div
+                  key={index}
+                  className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs transition-all"
+                >
+                  <button
+                    type="button"
+                    onClick={() => setOpenFaq(isOpen ? null : index)}
+                    className="w-full p-4 sm:p-5 text-left flex items-center justify-between gap-3 hover:bg-slate-50/80 transition-colors"
+                  >
+                    <span className="text-sm sm:text-base font-bold text-slate-900 pr-2">
+                      {faq.q}
+                    </span>
+                    <ChevronDown
+                      className={`w-4 h-4 text-slate-500 flex-shrink-0 transition-transform duration-200 ${
+                        isOpen ? 'rotate-180 text-gov-700' : ''
+                      }`}
+                    />
+                  </button>
+                  {isOpen && (
+                    <div className="px-4 pb-4 sm:px-5 sm:pb-5 pt-0 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-100 bg-slate-50/50">
+                      <div className="pt-3">{faq.a}</div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
 
