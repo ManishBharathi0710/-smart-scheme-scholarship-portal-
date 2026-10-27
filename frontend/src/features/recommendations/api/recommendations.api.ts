@@ -49,10 +49,11 @@ export const recommendationsApi = {
    * Retrieves single recommendation detail with explainability trace
    */
   async getRecommendationDetail(id: string): Promise<RecommendationDetail> {
-    const res = await apiClient.get<ApiSuccessResponse<any>>(
+    const res = await apiClient.get<ApiSuccessResponse<Record<string, unknown>>>(
       `/recommendations/${id}`,
     );
-    const raw = res.data.data;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const raw = res.data.data as any;
     if (!raw) return raw;
 
     const details = raw.evaluationDetails || {};
@@ -63,9 +64,15 @@ export const recommendationsApi = {
       ...raw,
       explanation: raw.explanation || {
         summary: details.summary || raw.summary || '',
-        matched: (details.matchedConditions || []).map((c: any) => c.explanation || c.description || ''),
-        failed: (details.failedConditions || []).map((c: any) => c.explanation || c.description || ''),
-        unknown: (details.unknownConditions || []).map((c: any) => c.explanation || c.description || ''),
+        matched: (details.matchedConditions || []).map(
+          (c: { explanation?: string; description?: string }) => c.explanation || c.description || ''
+        ),
+        failed: (details.failedConditions || []).map(
+          (c: { explanation?: string; description?: string }) => c.explanation || c.description || ''
+        ),
+        unknown: (details.unknownConditions || []).map(
+          (c: { explanation?: string; description?: string }) => c.explanation || c.description || ''
+        ),
         conditions: [
           ...(details.matchedConditions || []),
           ...(details.failedConditions || []),
@@ -91,12 +98,14 @@ export const recommendationsApi = {
           raw.scheme?.officialSourceUrl ||
           raw.scheme?.officialPortalUrl ||
           null,
-        requiredDocuments: documents.map((d: any) => ({
-          id: d.id,
-          name: d.name,
-          mandatory: d.mandatory ?? true,
-          description: d.description || d.notes || null,
-        })),
+        requiredDocuments: documents.map(
+          (d: { id: string; name: string; mandatory?: boolean; description?: string; notes?: string }) => ({
+            id: d.id,
+            name: d.name,
+            mandatory: d.mandatory ?? true,
+            description: d.description || d.notes || null,
+          })
+        ),
         applicationPeriod: {
           applicationOpenDate: appPeriod?.openDate || appPeriod?.applicationOpenDate || null,
           applicationCloseDate: appPeriod?.closeDate || appPeriod?.applicationCloseDate || raw.deadline || null,

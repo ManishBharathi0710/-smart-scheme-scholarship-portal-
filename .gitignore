@@ -48,4 +48,6 @@ backend/prisma/*.db-journal
 # Temporary directories
 tmp/
 temp/
+.pgdata/
+**/.pgdata/
 .temp/

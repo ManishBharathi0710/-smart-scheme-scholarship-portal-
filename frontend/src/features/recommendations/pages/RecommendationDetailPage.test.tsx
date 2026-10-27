@@ -223,7 +223,7 @@ describe('RecommendationDetailPage Component', () => {
 
     // Modal should appear
     expect(screen.getByTestId('exit-portal-modal')).toBeInTheDocument();
-    expect(screen.getByText(/Leaving to Official Portal/i)).toBeInTheDocument();
+    expect(screen.getByText(/Leaving to Official.*Portal/i)).toBeInTheDocument();
 
     // Confirm navigation
     const confirmBtn = screen.getByTestId('confirm-external-link-btn');

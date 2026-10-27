@@ -6,13 +6,14 @@ import { disconnectDatabase, connectWithRetry } from './database/prisma.js';
 import { ensureLocalDatabaseRunning, stopLocalDatabase } from './scripts/local-db.js';
 
 let server: Server | null = null;
+const app = createApp();
 
 async function startServer(): Promise<void> {
   try {
     logger.info({ environment: env.NODE_ENV, port: env.PORT }, 'Starting server initialization...');
 
-    // In development mode, auto-start embedded database if port 5432 is not running
-    if (env.NODE_ENV === 'development') {
+    // In development mode, auto-start embedded database if port 5432 is not running (skipped in Vercel/cloud)
+    if (env.NODE_ENV === 'development' && !process.env.VERCEL) {
       await ensureLocalDatabaseRunning();
     }
 
@@ -25,8 +26,6 @@ async function startServer(): Promise<void> {
         '⚠️ Database connection not reachable after retries. Service running in degraded mode.',
       );
     }
-
-    const app = createApp();
 
     server = app.listen(env.PORT, () => {
       logger.info(
@@ -96,5 +95,10 @@ function setupGracefulShutdown(): void {
   });
 }
 
-// Start the server
-startServer();
+// Start the server in standalone / container environments
+if (!process.env.VERCEL) {
+  startServer();
+}
+
+export { app };
+export default app;

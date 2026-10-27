@@ -78,23 +78,35 @@ curl http://localhost:5001/ready
 * Backend API: `http://localhost:5001/api/v1`
 * Root Health Check: `http://localhost:5001/health`
 
-### Option B: Local Development
+### Option B: Local Development & Unified Server (Single Command)
+
+**Run Frontend & Backend Concurrently (Development Mode):**
 ```bash
-# 1. Configure environment
-cp backend/.env.example backend/.env
-cp frontend/.env.example frontend/.env
-
-# 2. Start PostgreSQL via Docker
-docker compose up -d postgres
-
-# 3. Database migrations & client generation
-npm --prefix backend run prisma:migrate
-npm --prefix backend run prisma:generate
-
-# 4. Start Development Servers
-npm run dev:backend   # Port 5001
-npm run dev:frontend  # Port 5173
+npm start
+# Or:
+npm run dev
+# Or:
+./run.sh
 ```
+* **Frontend Application**: `http://localhost:5173`
+* **Backend API**: `http://localhost:5001/api/v1`
+* **API Health Check**: `http://localhost:5001/health`
+
+**Run Combined Unified Fullstack Application (Single Port Mode):**
+```bash
+npm run serve
+# Or:
+npm run start:prod
+# Or:
+./run.sh prod
+```
+* **Full Application & UI**: `http://localhost:5001` (React SPA is directly served from Express)
+* **Backend API**: `http://localhost:5001/api/v1`
+* **API Health Check**: `http://localhost:5001/health`
+
+Individual service commands:
+* `npm run dev:backend` — Starts only backend server (port 5001)
+* `npm run dev:frontend` — Starts only frontend Vite dev server (port 5173)
 
 ---
 

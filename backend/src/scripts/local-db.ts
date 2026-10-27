@@ -1,5 +1,6 @@
 import EmbeddedPostgres from 'embedded-postgres';
 import path from 'path';
+import fs from 'fs';
 import net from 'net';
 
 interface EmbeddedPostgresInstance {
@@ -27,7 +28,7 @@ export async function ensureLocalDatabaseRunning(): Promise<boolean> {
   try {
     const isPortOpen = await new Promise<boolean>((resolve) => {
       const socket = new net.Socket();
-      socket.setTimeout(600);
+      socket.setTimeout(1000);
       socket.on('connect', () => {
         socket.destroy();
         resolve(true);
@@ -47,6 +48,26 @@ export async function ensureLocalDatabaseRunning(): Promise<boolean> {
     }
 
     const dbPath = path.resolve(process.cwd(), '.pgdata');
+    const isInitialized = fs.existsSync(path.join(dbPath, 'PG_VERSION'));
+    const pidFile = path.join(dbPath, 'postmaster.pid');
+
+    // Clean up stale pid file if postmaster process is no longer running
+    if (fs.existsSync(pidFile)) {
+      try {
+        const pidContent = fs.readFileSync(pidFile, 'utf8').trim().split('\n')[0];
+        const pid = parseInt(pidContent ?? '', 10);
+        if (pid && !Number.isNaN(pid)) {
+          process.kill(pid, 0); // Check liveness; throws if dead
+        }
+      } catch {
+        try {
+          fs.unlinkSync(pidFile);
+        } catch {
+          // ignore
+        }
+      }
+    }
+
     const PostgresClass = EmbeddedPostgres as unknown as EmbeddedPostgresConstructor;
     pgInstance = new PostgresClass({
       port: 5432,
@@ -60,7 +81,9 @@ export async function ensureLocalDatabaseRunning(): Promise<boolean> {
     try {
       await pgInstance.start();
     } catch {
-      await pgInstance.initialise();
+      if (!isInitialized) {
+        await pgInstance.initialise();
+      }
       await pgInstance.start();
     }
     return true;
